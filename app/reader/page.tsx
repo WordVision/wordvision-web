@@ -1,21 +1,37 @@
 "use client"
 
-import { useEffect, useState } from "react";
-import ePub, { Contents, Rendition } from "epubjs";
+import { useEffect, useRef, useState } from "react";
+import ePub, { Contents, NavItem, Rendition } from "epubjs";
 import Section from "epubjs/types/section";
 
-import { Button, ButtonGroup, ButtonText } from "@/components/ui/button";
+import { Button, ButtonIcon, ButtonText } from "@/components/ui/button";
 import { Spinner } from "@/components/ui/spinner";
 import ContextMenu from "./components/ContextMenu";
+import { ChevronLeft, ChevronRight, TableOfContents } from "lucide-react";
+import { Drawer, DrawerBackdrop, DrawerBody, DrawerContent, DrawerFooter, DrawerHeader } from "@/components/ui/drawer";
+import { Heading } from "@/components/ui/heading";
+import { Link, LinkText } from "@/components/ui/link";
+
+const MIN_SWIPE_DISTANCE = 50; // Minimum distance in pixels for a swipe
 
 export default function Reader() {
 
   const [rendition, setRendition] = useState<Rendition | null>(null);
   const [bookLoaded, setBookLoaded] = useState<boolean>(false);
-  const [sectionPage, setSectionPage] = useState<number>(0);
   const [selection, setSelection] = useState<{text: string, location: string} | null>(null);
+
   const [menuPos, setMenuPos] = useState<{top: number, left: number} | null>({top: 0, left: 0});
   const [showMenu, setShowMenu] = useState<boolean>(false);
+
+  const [toc, setTOC] = useState<NavItem[]>([]);
+  const [showTOC, setShowTOC] = useState<boolean>(false);
+
+  const [touchStart, setTouchStart] = useState<{x: number; y: number}>({x: 0, y: 0});
+  const touchStartRef = useRef(touchStart);
+
+  useEffect(() => {
+    touchStartRef.current = touchStart;
+  }, [touchStart])
 
   useEffect(() => {
     (async () => {
@@ -24,6 +40,8 @@ export default function Reader() {
       await book.ready;
 
       setBookLoaded(true)
+      setTOC(book.navigation.toc);
+
       const rendition = book.renderTo("reader", { width: "100%", height: "100%" });
       rendition.display();
 
@@ -40,16 +58,67 @@ export default function Reader() {
         console.debug("rendered view:", {view})
 
         const viewDoc: Document = view.document;
+
+        // Set event handlers for the document
         viewDoc.oncontextmenu = e => e.preventDefault();
-        viewDoc.onmouseup = finishSelection;
-        viewDoc.ontouchcancel = finishSelection;
+        viewDoc.onmouseup = showMenuForSelection;
+        viewDoc.ontouchcancel = showMenuForSelection;
         viewDoc.onselectionchange = calculateMenuPosition;
+        viewDoc.ontouchstart = (e) => setTouchStart({
+          x: e.changedTouches[0].clientX,
+          y: e.changedTouches[0].clientY,
+        });
+        viewDoc.ontouchend = (e) => { flipPage(e, rendition) };
       })
 
       setRendition(rendition);
 
     })();
   }, []);
+
+
+  // OnTouchEnd Event Handler
+  function flipPage(e: TouchEvent, rendition: Rendition) {
+    console.debug("ontouchend", e)
+
+    const startX = touchStartRef.current.x;
+    const startY = touchStartRef.current.y;
+    const endX = e.changedTouches[0].clientX;
+    const endY = e.changedTouches[0].clientY;
+    const deltaX = endX - startX;
+    const deltaY = endY - startY;
+    const absDeltaX = Math.abs(deltaX);
+    const absDeltaY = Math.abs(deltaY);
+
+    // If user just tapped the screen
+    if (absDeltaX < MIN_SWIPE_DISTANCE && absDeltaY < MIN_SWIPE_DISTANCE) {
+      const readerWidth = e.view?.outerWidth!;
+
+      if ((startX / readerWidth) > 0.5) {
+        console.debug("tapped the right-hand side");
+        rendition.next();
+      }
+      else {
+        console.debug("tapped the left-hand side");
+        rendition.prev();
+      }
+    }
+    // Else, if user horizontally swipes the screen.
+    else if (absDeltaX > MIN_SWIPE_DISTANCE && absDeltaX > absDeltaY) {
+      if (deltaX < 0) {
+        console.debug('Swiped Left');
+        rendition.next();
+      }
+      else {
+        console.debug('Swiped Right');
+        rendition.prev();
+      }
+    }
+    // Else, user swiped vertically
+    else {
+       console.debug('Status: Not a clear horizontal swipe.');
+    }
+  }
 
 
   // OnSelectionChange Event Handler
@@ -83,7 +152,7 @@ export default function Reader() {
 
 
   // OnMouseUp and OnTouchCancel Event Handler
-  function finishSelection(e: MouseEvent | TouchEvent) {
+  function showMenuForSelection(e: MouseEvent | TouchEvent) {
     e.preventDefault();
     console.debug("finish selection event: ", e);
     if (!e.view?.document.getSelection()?.isCollapsed) {
@@ -92,51 +161,111 @@ export default function Reader() {
   }
 
 
-  return (
-
-    <div className="h-screen flex flex-col justify-center items-center">
+  return (<>
+    <div className="h-screen flex flex-col justify-center items-center bg-red-200">
 
       {bookLoaded &&
-        <ButtonGroup flexDirection="row">
-          <Button size="md" variant="solid" action="primary" onPress={() => {
-            console.log({sectionPage})
-            rendition?.prev().then(() => {
-              setSectionPage(prev => prev + 1);
-            })
-          }}>
-            <ButtonText>Prev</ButtonText>
-          </Button>
-
-          <Button size="md" variant="solid" action="primary" onPress={() => {
-            console.log({sectionPage})
-            rendition?.next().then(() => {
-              setSectionPage(prev => prev + 1);
-            })
-          }}>
-            <ButtonText>Next</ButtonText>
-          </Button>
-        </ButtonGroup>
+        <Button
+          size="md"
+          variant="solid"
+          action="primary"
+          onPress={() => {
+            setShowTOC(true);
+        }}>
+          <ButtonIcon as={TableOfContents} />
+        </Button>
       }
 
-      <div id="reader" className="relative bg-blue-200 w-full h-[80vh] lg:w-1/2">
-        {!bookLoaded && <Spinner />}
+      <div className="w-full flex justify-center items-center">
+        {bookLoaded &&
+          <Button
+            className="hidden lg:block"
+            size="md"
+            variant="solid"
+            action="primary"
+            onPress={() => {
+              rendition?.prev()
+          }}>
+            <ButtonIcon as={ChevronLeft} />
+          </Button>
+        }
 
-        {showMenu &&
-          <ContextMenu
-            top={menuPos!.top}
-            left={menuPos!.left}
-            dismissHandler={() => {
-              setShowMenu(false);
-              setSelection(null);
-              // @ts-ignore: DO NOT REMOVE THIS COMMENT
-              rendition.getContents()[0]?.window?.getSelection()?.removeAllRanges();
-            }}
+        <div id="reader" className="relative bg-blue-200 w-full h-[80vh] lg:w-1/2">
+          {!bookLoaded && <Spinner />}
 
-            highlightHandler={() => console.log(selection)}
-          />
+          {showMenu &&
+            <ContextMenu
+              top={menuPos!.top}
+              left={menuPos!.left}
+              dismissHandler={() => {
+                setShowMenu(false);
+                setSelection(null);
+                // @ts-ignore: DO NOT REMOVE THIS COMMENT
+                rendition.getContents()[0]?.window?.getSelection()?.removeAllRanges();
+              }}
+
+              highlightHandler={() => console.log(selection)}
+              visualizeHandler={() => console.log(selection)}
+            />
+          }
+        </div>
+
+        {bookLoaded &&
+          <Button
+            className="hidden lg:block"
+            size="md"
+            variant="solid"
+            action="primary"
+            onPress={() => {
+              rendition?.next()
+          }}>
+            <ButtonIcon as={ChevronRight} />
+          </Button>
         }
       </div>
-
     </div>
-  );
+
+    <Drawer
+      isOpen={showTOC}
+      onClose={() => {
+        setShowTOC(false)
+      }}
+      size="lg"
+      anchor="left"
+    >
+      <DrawerBackdrop />
+      <DrawerContent>
+
+        <DrawerHeader>
+          <Heading size="3xl">Table of Contents</Heading>
+        </DrawerHeader>
+
+        <DrawerBody>
+          {toc.map((item, i) => (
+            <Link
+              key={i}
+              onPress={() => {
+                rendition?.display(item.href)
+                setShowTOC(false);
+              }}
+            >
+              <LinkText>{item.label}</LinkText>
+            </Link>
+          ))}
+        </DrawerBody>
+
+        <DrawerFooter>
+          <Button
+            onPress={() => {
+              setShowTOC(false)
+            }}
+            className="flex-1"
+          >
+            <ButtonText>Close</ButtonText>
+          </Button>
+        </DrawerFooter>
+
+      </DrawerContent>
+    </Drawer>
+  </>);
 }
