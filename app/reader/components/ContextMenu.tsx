@@ -1,10 +1,12 @@
-import { Button, ButtonText } from "@/components/ui/button";
+import { Button, ButtonIcon, ButtonText } from "@/components/ui/button";
+import { Eye, Highlighter } from "lucide-react";
 
 interface ContextMenuProps {
   top: number;
   left: number;
   dismissHandler: () => void;
   highlightHandler: () => void;
+  visualizeHandler: () => void;
 }
 
 export default function ContextMenu(p: ContextMenuProps) {
@@ -15,14 +17,18 @@ export default function ContextMenu(p: ContextMenuProps) {
       onClick={p.dismissHandler}
     ></div>
     <div
-      className={`z-50 bg-white p-2 absolute`}
+      className="z-50 bg-gray-800 p-2 absolute flex gap-2"
       style={{
         top: p.top,
         left: p.left
       }}
     >
-      <Button onPress={p.highlightHandler}>
-        <ButtonText>Print selection</ButtonText>
+      <Button size="xs" variant="outline" onPress={p.highlightHandler}>
+        <ButtonIcon as={Highlighter}/>
+      </Button>
+
+      <Button size="xs" variant="outline" onPress={p.visualizeHandler}>
+        <ButtonIcon as={Eye}/>
       </Button>
     </div>
   </>;

@@ -44,6 +44,7 @@
     "@legendapp/motion": "^2.4.0",
     "autoprefixer": "^10.4.20",
     "epubjs": "^0.3.93",
+    "lucide-react": "^0.487.0",
     "nativewind": "^4.1.23",
     "next": "15.1.4",
     "react": "^19.0.0",
