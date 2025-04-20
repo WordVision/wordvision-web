@@ -7,8 +7,8 @@ from dotenv import load_dotenv
 # 🚩 Setup paths
 SCRIPT_DIR = Path(__file__).resolve().parent
 ROOT_DIR = SCRIPT_DIR.parent.parent
-SUPABASE_ENV_PATH = ROOT_DIR / 'frontend' / '.env'
-SUPABASE_DIR = ROOT_DIR / 'frontend' / 'supabase'
+SUPABASE_ENV_PATH = ROOT_DIR / 'wordvision-web' /   '.env'
+SUPABASE_DIR = ROOT_DIR / 'wordvision-web' / 'supabase'
 SEED_SQL = SUPABASE_DIR / 'seed.sql'
 MIGRATIONS_DIR = SUPABASE_DIR / 'migrations'
 UPLOAD_SCRIPT = SCRIPT_DIR / "upload_sample_books.py"
