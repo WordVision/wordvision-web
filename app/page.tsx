@@ -15,6 +15,9 @@ const Container = () => {
       id="home"
       className="min-h-screen flex flex-col justify-center items-center text-center px-4 dark:to-gray-800 pt-20"
     >
+      <div className="flex justify-center">
+        <Text className="text-2xl mb-4">Bring your stories to life</Text>
+      </div>
       <div className="max-w-2xl mx-auto">
         <h1 className="text-5xl md:text-6xl font-bold mb-4 text-gray-900 dark:text-white">
           <span className="highlight-cursor">
