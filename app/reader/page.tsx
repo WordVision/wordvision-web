@@ -26,9 +26,10 @@ export default function Reader() {
   const [toc, setTOC] = useState<NavItem[]>([]);
   const [showTOC, setShowTOC] = useState<boolean>(false);
 
+  const [showNav, setShowNav] = useState<boolean>(false);
+
   const [touchStart, setTouchStart] = useState<{x: number; y: number}>({x: 0, y: 0});
   const touchStartRef = useRef(touchStart);
-
   useEffect(() => {
     touchStartRef.current = touchStart;
   }, [touchStart])
@@ -64,10 +65,18 @@ export default function Reader() {
         viewDoc.onmouseup = showMenuForSelection;
         viewDoc.ontouchcancel = showMenuForSelection;
         viewDoc.onselectionchange = calculateMenuPosition;
-        viewDoc.ontouchstart = (e) => setTouchStart({
-          x: e.changedTouches[0].clientX,
-          y: e.changedTouches[0].clientY,
-        });
+        viewDoc.ontouchstart = (e) => {
+          // Make sure endX is within the bounds of readerWidth
+          const readerWidth = e.view?.outerWidth!;
+          let x = e.changedTouches[0].clientX;
+          while (x > readerWidth) {
+            x -= readerWidth;
+          }
+          setTouchStart({
+            x,
+            y: e.changedTouches[0].clientY,
+          })
+        };
         viewDoc.ontouchend = (e) => { flipPage(e, rendition) };
       })
 
@@ -79,11 +88,20 @@ export default function Reader() {
 
   // OnTouchEnd Event Handler
   function flipPage(e: TouchEvent, rendition: Rendition) {
-    console.debug("ontouchend", e)
+    console.debug("ontouchend flip page", e)
+
+    e.preventDefault();
+
+    const readerWidth = e.view?.outerWidth!;
 
     const startX = touchStartRef.current.x;
     const startY = touchStartRef.current.y;
-    const endX = e.changedTouches[0].clientX;
+
+    // Make sure endX is within the bounds of readerWidth
+    let endX = e.changedTouches[0].clientX;
+    while (endX > readerWidth) {
+      endX -= readerWidth;
+    }
     const endY = e.changedTouches[0].clientY;
     const deltaX = endX - startX;
     const deltaY = endY - startY;
@@ -94,13 +112,17 @@ export default function Reader() {
     if (absDeltaX < MIN_SWIPE_DISTANCE && absDeltaY < MIN_SWIPE_DISTANCE) {
       const readerWidth = e.view?.outerWidth!;
 
-      if ((startX / readerWidth) > 0.5) {
-        console.debug("tapped the right-hand side");
+      if ((startX / readerWidth) > 0.75) {
+        console.debug("tapped the right-hand side", {startX, readerWidth});
         rendition.next();
       }
-      else {
-        console.debug("tapped the left-hand side");
+      else if ((startX / readerWidth) < 0.25) {
+        console.debug("tapped the left-hand side", {startX, readerWidth});
         rendition.prev();
+      }
+      else {
+        console.debug("tapped the center");
+        setShowNav(true);
       }
     }
     // Else, if user horizontally swipes the screen.
@@ -162,21 +184,28 @@ export default function Reader() {
 
 
   return (<>
-    <div className="h-screen flex flex-col justify-center items-center bg-red-200">
+    <div className="h-screen relative flex flex-col justify-center items-center bg-red-200">
 
-      {bookLoaded &&
+      <div className={"fixed inset-x-0 top-0 z-[60] px-4 py-2 bg-gray-800/95 flex justify-end transition" + (showNav ? "" : " -translate-y-full")} >
         <Button
-          size="md"
-          variant="solid"
+          size="sm"
+          variant="outline"
           action="primary"
           onPress={() => {
             setShowTOC(true);
         }}>
           <ButtonIcon as={TableOfContents} />
         </Button>
+      </div>
+
+      {showNav &&
+        <div
+          className="fixed inset-0 z-50 bg-transparent"
+          onClick={() => setShowNav(false)}
+        ></div>
       }
 
-      <div className="w-full flex justify-center items-center">
+      <div className="w-full h-full flex justify-center items-center">
         {bookLoaded &&
           <Button
             className="hidden lg:block"
@@ -190,7 +219,7 @@ export default function Reader() {
           </Button>
         }
 
-        <div id="reader" className="relative bg-blue-200 w-full h-[80vh] lg:w-1/2">
+        <div id="reader" className="relative bg-white h-full w-full lg:w-1/2">
           {!bookLoaded && <Spinner />}
 
           {showMenu &&
@@ -247,6 +276,7 @@ export default function Reader() {
               onPress={() => {
                 rendition?.display(item.href)
                 setShowTOC(false);
+                setShowNav(false);
               }}
             >
               <LinkText>{item.label}</LinkText>
