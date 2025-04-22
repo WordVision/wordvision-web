@@ -1,4 +1,5 @@
 import { Text } from "@/components/ui/text";
+import { Button, ButtonText } from "@/components/ui/button";
 
 export default function Home() {
   return (
@@ -21,10 +22,18 @@ const Container = () => {
             <span className="moving-cursor"></span>
           </span>
         </h1>
-        <Text className="text-2xl text-typography-white font-bold ml-2">
-          Bring stories to life
-        </Text>
+        <div className="flex justify-center">
+          <SignInBtn />
+        </div>
       </div>
     </section>
+  );
+};
+
+const SignInBtn = () => {
+  return (
+    <Button size="md" variant="solid" action="primary">
+      <ButtonText>Sign in / Register</ButtonText>
+    </Button>
   );
 };
