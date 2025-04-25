@@ -1,9 +1,9 @@
 // frontend/supabase/functions/highlight/index.ts
 import { HfInference } from "@huggingface/inference";
-import { createClient } from "@supabase/supabase-js";
 import { Redis } from "@upstash/redis";
 import { Ratelimit } from "@upstash/ratelimit";
-import { SupabaseClient } from "../_shared/supabaseClient.ts";
+import { Duration } from "@upstash/ratelimit";
+import { SupabaseClient } from "../_shared/supabaseClient";
 
 Deno.serve(async (req: Request) => {
   // Get request body data
@@ -32,7 +32,7 @@ Deno.serve(async (req: Request) => {
   // Note: We make this check first so that in case they exceeded their limit, the given highlight also doesn't get saved.
   if (visualize) {
     const limit: number = 2; // 2 requests
-    const rate: string = "24h"; // per 24 hours
+    const rate: Duration = "24h";
 
     const redis = new Redis({
       url: Deno.env.get("UPSTASH_REDIS_REST_URL")!,
@@ -182,9 +182,6 @@ async function generateImage(prompt: string) {
     {
       inputs: prompt,
       model: "stabilityai/stable-diffusion-3.5-large-turbo",
-    },
-    {
-      use_cache: false,
     }
   );
 
