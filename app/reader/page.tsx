@@ -1,7 +1,7 @@
 "use client"
 
 import { useEffect, useRef, useState } from "react";
-import ePub, { Contents, NavItem, Rendition } from "epubjs";
+import ePub, { NavItem, Rendition } from "epubjs";
 import Section from "epubjs/types/section";
 
 import { Button, ButtonIcon, ButtonText } from "@/components/ui/button";
@@ -46,14 +46,14 @@ export default function Reader() {
       const rendition = book.renderTo("reader", { width: "100%", height: "100%" });
       rendition.display();
 
-      rendition.on("selected", (cfiRange: string, _: Contents) => {
+      rendition.on("selected", (cfiRange: string) => {
         const selection = {
           text: rendition.getRange(cfiRange).toString(),
           location: cfiRange,
         };
-        console.debug({selection})
+        console.debug({ selection });
         setSelection(selection);
-      })
+      });
 
       rendition.on("rendered", (_: Section, view: any) => {
         console.debug("rendered view:", {view})
