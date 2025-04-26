@@ -1,8 +1,5 @@
 import { HfInference } from "@huggingface/inference";
-import { createClient } from "@supabase/supabase-js";
-import { Redis } from "@upstash/redis";
-import { Ratelimit } from "@upstash/ratelimit";
-import { SupabaseClient } from "../_shared/supabaseClient.ts";
+import { SupabaseClient } from "../_shared/supabaseClient";
 
 Deno.serve(async (req: Request) => {
   try {
@@ -125,16 +122,13 @@ async function generateImage(prompt: string): Promise<Blob> {
   console.log("🤖 Calling Hugging Face with prompt:", prompt);
   const hf = new HfInference(Deno.env.get("HUGGING_FACE_ACCESS_TOKEN"));
   console.log("🔐 Loaded HF token:", Deno.env.get("HUGGING_FACE_ACCESS_TOKEN"));
-
-  const image = await hf.textToImage(
-    {
-      inputs: prompt,
-      model: "stabilityai/stable-diffusion-3.5-large-turbo",
-    },
-    {
-      use_cache: false,
-    }
-  );
+  
+  // Remove the invalid use_cache option
+  const image = await hf.textToImage({
+    inputs: prompt,
+    model: "stabilityai/stable-diffusion-3.5-large-turbo",
+  });
+  
   console.log("🎨 Hugging Face returned image blob");
   return image;
 }
