@@ -8,20 +8,42 @@ import { Button, ButtonIcon, ButtonText } from "@/components/ui/button";
 import { Spinner } from "@/components/ui/spinner";
 import ContextMenu from "./components/ContextMenu";
 import { ChevronLeft, ChevronRight } from "lucide-react";
-import { Drawer, DrawerBackdrop, DrawerBody, DrawerContent, DrawerFooter, DrawerHeader } from "@/components/ui/drawer";
+import {
+  Drawer,
+  DrawerBackdrop,
+  DrawerBody,
+  DrawerContent,
+  DrawerFooter,
+  DrawerHeader
+} from "@/components/ui/drawer";
 import { Heading } from "@/components/ui/heading";
 import { Link, LinkText } from "@/components/ui/link";
 import ActionBar from "./components/ActionBar";
 
 const MIN_SWIPE_DISTANCE = 50; // Minimum distance in pixels for a swipe
 
+interface BookSelection {
+  text: string;
+  location: string;
+}
+
+interface Position {
+  top: number;
+  left: number;
+}
+
+interface Coordinates {
+  x: number;
+  y: number
+}
+
 export default function Reader() {
 
   const [rendition, setRendition] = useState<Rendition | null>(null);
   const [bookLoaded, setBookLoaded] = useState<boolean>(false);
-  const [selection, setSelection] = useState<{text: string, location: string} | null>(null);
+  const [selection, setSelection] = useState<BookSelection | null>(null);
 
-  const [menuPos, setMenuPos] = useState<{top: number, left: number} | null>({top: 0, left: 0});
+  const [menuPos, setMenuPos] = useState<Position>({top: 0, left: 0});
   const [showMenu, setShowMenu] = useState<boolean>(false);
 
   const [toc, setTOC] = useState<NavItem[]>([]);
@@ -29,7 +51,7 @@ export default function Reader() {
 
   const [showNav, setShowNav] = useState<boolean>(false);
 
-  const [touchStart, setTouchStart] = useState<{x: number; y: number}>({x: 0, y: 0});
+  const [touchStart, setTouchStart] = useState<Coordinates>({x: 0, y: 0});
   const touchStartRef = useRef(touchStart);
   useEffect(() => {
     touchStartRef.current = touchStart;
