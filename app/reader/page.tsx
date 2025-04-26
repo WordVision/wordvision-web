@@ -7,10 +7,11 @@ import Section from "epubjs/types/section";
 import { Button, ButtonIcon, ButtonText } from "@/components/ui/button";
 import { Spinner } from "@/components/ui/spinner";
 import ContextMenu from "./components/ContextMenu";
-import { ChevronLeft, ChevronRight, TableOfContents } from "lucide-react";
+import { ChevronLeft, ChevronRight } from "lucide-react";
 import { Drawer, DrawerBackdrop, DrawerBody, DrawerContent, DrawerFooter, DrawerHeader } from "@/components/ui/drawer";
 import { Heading } from "@/components/ui/heading";
 import { Link, LinkText } from "@/components/ui/link";
+import ActionBar from "./components/ActionBar";
 
 const MIN_SWIPE_DISTANCE = 50; // Minimum distance in pixels for a swipe
 
@@ -186,24 +187,11 @@ export default function Reader() {
   return (<>
     <div className="h-screen relative flex flex-col justify-center items-center bg-red-200">
 
-      <div className={"fixed inset-x-0 top-0 z-[60] px-4 py-2 bg-gray-800/95 flex justify-end transition" + (showNav ? "" : " -translate-y-full")} >
-        <Button
-          size="sm"
-          variant="outline"
-          action="primary"
-          onPress={() => {
-            setShowTOC(true);
-        }}>
-          <ButtonIcon as={TableOfContents} />
-        </Button>
-      </div>
-
-      {showNav &&
-        <div
-          className="fixed inset-0 z-50 bg-transparent"
-          onClick={() => setShowNav(false)}
-        ></div>
-      }
+      <ActionBar
+        show={showNav}
+        tocHandler={() => setShowTOC(true)}
+        dismissHandler={() => setShowNav(false)}
+      />
 
       <div className="w-full h-full flex justify-center items-center">
         {bookLoaded &&
