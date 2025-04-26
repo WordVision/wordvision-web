@@ -1,5 +1,8 @@
+"use client"
+
 import { Text } from "@/components/ui/text";
 import { Button, ButtonText } from "@/components/ui/button";
+import Link from "next/link";
 
 export default function Home() {
   return (
@@ -25,9 +28,9 @@ const Container = () => {
             <span className="moving-cursor"></span>
           </span>
         </h1>
-        <div className="flex justify-center">
+        <Link className="flex justify-center" href="/reader">
           <SignInBtn />
-        </div>
+        </Link>
       </div>
     </section>
   );
