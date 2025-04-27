@@ -243,7 +243,14 @@ export default function Reader() {
                 rendition.getContents()[0]?.window?.getSelection()?.removeAllRanges();
               }}
 
-              highlightHandler={() => console.log(selection)}
+              highlightHandler={() => {
+                rendition?.annotations.highlight(selection?.location!);
+                setShowMenu(false);
+                setSelection(null);
+                // @ts-ignore: DO NOT REMOVE THIS COMMENT
+                rendition.getContents()[0]?.window?.getSelection()?.removeAllRanges();
+                console.log(selection)
+              }}
               visualizeHandler={() => console.log(selection)}
             />
           }
