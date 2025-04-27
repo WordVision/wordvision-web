@@ -17,17 +17,27 @@ export default function ContextMenu(p: ContextMenuProps) {
       onClick={p.dismissHandler}
     ></div>
     <div
-      className="z-50 bg-gray-800 p-2 absolute flex gap-2"
+      className="h-[50px] z-50 bg-gray-800 absolute flex px-2 items-center gap-2"
       style={{
-        top: p.top,
+        top: p.top < 50 ? p.top + 20 : p.top - 50,
         left: p.left
       }}
     >
-      <Button size="xs" variant="outline" onPress={p.highlightHandler}>
+      <Button
+        size="xs"
+        variant="outline"
+        className="text-white"
+        onPress={p.highlightHandler}
+      >
         <ButtonIcon as={Highlighter}/>
       </Button>
 
-      <Button size="xs" variant="outline" onPress={p.visualizeHandler}>
+      <Button
+        size="xs"
+        variant="outline"
+        className="text-white"
+        onPress={p.visualizeHandler}
+      >
         <ButtonIcon as={Eye}/>
       </Button>
     </div>

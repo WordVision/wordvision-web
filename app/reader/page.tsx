@@ -178,14 +178,12 @@ export default function Reader() {
 
     if (!selection.isCollapsed) {
       const range = selection?.getRangeAt(0);
-      const rect = range?.getBoundingClientRect();
       const clientRects = range?.getClientRects();
-      const lastRect = clientRects![clientRects!.length - 1];
-      const position = lastRect || rect;
+      const rect = clientRects![0];
 
       const clientWidth = e.target.activeElement.clientWidth;
-      const top = position.top + position.height;
-      let left = position.left;
+      const top = rect.top < 50 ? rect.top + rect.height : rect.top;
+      let left = rect.left;
 
       while(left > clientWidth) {
         left -= clientWidth;
