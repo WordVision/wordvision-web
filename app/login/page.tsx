@@ -4,7 +4,7 @@ import Link from "next/link";
 
 export default function SignupPage() {
   return (
-    <div className="flex w-full h-screen bg-black">
+    <div className="flex w-full min-h-screen bg-black">
       {/* Left Side - Decorative Section */}
       <div className="relative hidden md:flex md:w-5/12 items-center justify-center">
         <div className="absolute w-full h-2/5 bg-purple-600 opacity-80 rounded-full transform scale-100 rotate-[-15deg]"></div>
@@ -18,12 +18,14 @@ export default function SignupPage() {
           />
         </div>
       </div>
+
       {/* Right Side - Form Section */}
-      <div className="w-full md:w-7/12 flex items-center justify-center px-4 md:px-12 lg:px-20">
+      <div className="w-full md:w-7/12 flex items-center justify-center p-6 sm:p-8 md:px-12 lg:px-20">
         <div className="w-full max-w-md">
-          <h1 className="text-3xl font-bold text-white mb-6">
+          <h1 className="text-2xl sm:text-3xl font-bold text-white mb-6">
             Login to Account
           </h1>
+
           <div className="mb-4">
             <label className="block text-gray-400 text-sm mb-2">Email</label>
             <input
@@ -46,8 +48,8 @@ export default function SignupPage() {
             Create Account
           </button>
 
-          <div className="mt-4 text-center text-gray-400">
-            Don't have a account?
+          <div className="mt-4 text-center text-gray-400 text-sm sm:text-base">
+            Don't have an account?
             <Link
               href="/signup"
               className="text-purple-500 hover:text-purple-400 ml-1"
