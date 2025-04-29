@@ -70,8 +70,8 @@ export default function SignupPage() {
               </label>
               <input
                 type="date"
-                id="date"
-                name="date"
+                id="brithdate"
+                name="birthdate"
                 placeholder="Select your Birthdate"
                 className="w-full p-3 bg-gray-800 text-white rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500"
               />

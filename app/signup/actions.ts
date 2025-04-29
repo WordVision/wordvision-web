@@ -17,10 +17,20 @@ export async function signup(formData: FormData) {
     password: formData.get("password") as string,
     firstName: formData.get("firstName") as string,
     lastName: formData.get("lastName") as string,
-    date: formData.get("date") as string,
+    birthdate: formData.get("birthdate") as string,
   };
 
-  const { error } = await supabase.auth.signUp(data);
+  const { error } = await supabase.auth.signUp({
+    email: data.email,
+    password: data.password,
+    options: {
+      data: {
+        first_name: data.firstName,
+        last_name: data.lastName,
+        birthdate: new Date(data.birthdate).toISOString(),
+      },
+    },
+  });
 
   if (error) {
     console.error("Signup error:", error);
