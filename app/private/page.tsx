@@ -1,5 +1,5 @@
 import { redirect } from "next/navigation";
-
+import { signOut } from "@/app/logout/actions";
 import { createClient } from "@/utils/supabase/server";
 
 export default async function PrivatePage() {
@@ -24,6 +24,14 @@ export default async function PrivatePage() {
             <span className="moving-cursor"></span>
           </span>
         </h1>
+        <form action={signOut}>
+          <button
+            className="w-full flex items-center justify-center bg-transparent border border-gray-700 text-black py-3 px-4 rounded-md hover:bg-gray-800 transition-colors duration-300"
+            type="submit"
+          >
+            Sign Out
+          </button>
+        </form>
       </div>
     </section>
   );
