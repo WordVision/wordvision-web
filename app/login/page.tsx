@@ -1,8 +1,9 @@
-// Loginpage
+// app/login/page.tsx
 import Image from "next/image";
 import Link from "next/link";
+import { login } from "./actions";
 
-export default function SignupPage() {
+export default function LoginPage() {
   return (
     <div className="flex w-full min-h-screen bg-black">
       {/* Left Side - Decorative Section */}
@@ -26,27 +27,40 @@ export default function SignupPage() {
             Login to Account
           </h1>
 
-          <div className="mb-4">
-            <label className="block text-gray-400 text-sm mb-2">Email</label>
-            <input
-              type="email"
-              placeholder="Enter your Email here"
-              className="w-full p-3 bg-gray-800 text-white rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500"
-            />
-          </div>
+          <form action={login}>
+            <div className="mb-4">
+              <label className="block text-gray-400 text-sm mb-2">Email</label>
+              <input
+                id="email"
+                name="email"
+                type="email"
+                required
+                placeholder="Enter your Email here"
+                className="w-full p-3 bg-gray-800 text-white rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500"
+              />
+            </div>
 
-          <div className="mb-6">
-            <label className="block text-gray-400 text-sm mb-2">Password</label>
-            <input
-              type="password"
-              placeholder="Enter your Password here"
-              className="w-full p-3 bg-gray-800 text-white rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500"
-            />
-          </div>
+            <div className="mb-6">
+              <label className="block text-gray-400 text-sm mb-2">
+                Password
+              </label>
+              <input
+                id="password"
+                name="password"
+                type="password"
+                required
+                placeholder="Enter your Password here"
+                className="w-full p-3 bg-gray-800 text-white rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500"
+              />
+            </div>
 
-          <button className="w-full bg-purple-600 hover:bg-purple-700 text-white font-medium py-3 px-4 rounded-md transition-colors duration-300">
-            Create Account
-          </button>
+            <button
+              type="submit"
+              className="w-full bg-purple-600 hover:bg-purple-700 text-white font-medium py-3 px-4 rounded-md transition-colors duration-300"
+            >
+              Log In
+            </button>
+          </form>
 
           <div className="mt-4 text-center text-gray-400 text-sm sm:text-base">
             Don't have an account?
