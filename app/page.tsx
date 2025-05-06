@@ -1,4 +1,4 @@
-"use client"
+"use client";
 
 import { Text } from "@/components/ui/text";
 import { Button, ButtonText } from "@/components/ui/button";
@@ -28,7 +28,7 @@ const Container = () => {
             <span className="moving-cursor"></span>
           </span>
         </h1>
-        <Link className="flex justify-center" href="/reader">
+        <Link className="flex justify-center" href="/signup">
           <SignInBtn />
         </Link>
       </div>
