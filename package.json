@@ -61,7 +61,8 @@
     "react-native-css-interop": "^0.1.22",
     "react-native-safe-area-context": "^5.1.0",
     "react-native-svg": "^15.2.0",
-    "react-native-web": "^0.19.13"
+    "react-native-web": "^0.19.13",
+    "uuid": "^11.1.0"
   },
   "devDependencies": {
     "@eslint/eslintrc": "^3",

@@ -2,8 +2,10 @@
 import Image from "next/image";
 import Link from "next/link";
 import { login } from "./actions";
+import { redirectIfLoggedIn } from "@/lib/redirectIfLoggedIn";
 
-export default function LoginPage() {
+export default async function LoginPage() {
+  await redirectIfLoggedIn();
   return (
     <div className="flex w-full min-h-screen bg-black">
       {/* Left Side - Decorative Section */}
@@ -63,7 +65,7 @@ export default function LoginPage() {
           </form>
 
           <div className="mt-4 text-center text-gray-400 text-sm sm:text-base">
-            Don't have an account?
+            Don&apos;t have an account?
             <Link
               href="/signup"
               className="text-purple-500 hover:text-purple-400 ml-1"
