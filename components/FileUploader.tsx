@@ -24,6 +24,7 @@ const FileUploader = forwardRef<FileUploaderHandle, Props>(
   ({ user, onUploadComplete }, ref) => {
     const fileInputRef = useRef<HTMLInputElement>(null);
     const [uploading, setUploading] = useState(false);
+    const supabse_url = process.env.NEXT_PUBLIC_SUPABASE_URL;
 
     useImperativeHandle(ref, () => ({
       openFilePicker: () => {
@@ -78,7 +79,7 @@ const FileUploader = forwardRef<FileUploaderHandle, Props>(
             title,
             author,
             filename: file.name,
-            img_url: `https://szlxwnautzzqyrsnlenr.supabase.co/storage/v1/object/public/books/${filePath}`,
+            img_url: `${supabse_url}/storage/v1/object/public/books/${filePath}`,
           })
           .select("id")
           .single();
@@ -112,6 +113,12 @@ const FileUploader = forwardRef<FileUploaderHandle, Props>(
           accept=".epub"
           onChange={handleFileChange}
         />
+
+        {uploading && (
+          <div className="fixed bottom-24 right-6 bg-gray-800 text-white text-sm px-4 py-2 rounded shadow-lg">
+            Uploading...
+          </div>
+        )}
       </>
     );
   }

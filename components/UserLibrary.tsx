@@ -30,10 +30,16 @@ export default function UserLibrary({ user }: Props) {
   const fetchUserBooks = async () => {
     const supabase = createClient();
 
-    const { data: userBooks } = await supabase
+    const { data: userBooks, error: userBooksError } = await supabase
       .from("user_books")
       .select("book_id")
       .eq("user_id", user.id);
+
+    if (userBooksError) {
+      setError("Could not fetch user books.");
+      setLoading(false);
+      return;
+    }
 
     const bookIds = userBooks?.map((entry) => entry.book_id) || [];
 

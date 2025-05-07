@@ -1,6 +1,5 @@
 // app/library/page.tsx
 import { redirect } from "next/navigation";
-import { signOut } from "@/app/logout/actions";
 import { createClient } from "@/utils/supabase/server";
 import UserLibrary from "@/components/UserLibrary";
 
