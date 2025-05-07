@@ -65,7 +65,7 @@ export default async function LoginPage() {
           </form>
 
           <div className="mt-4 text-center text-gray-400 text-sm sm:text-base">
-            Don't have an account?
+            Don&apos;t have an account?
             <Link
               href="/signup"
               className="text-purple-500 hover:text-purple-400 ml-1"
