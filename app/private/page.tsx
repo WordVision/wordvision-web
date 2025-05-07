@@ -15,5 +15,9 @@ export default async function PrivatePage() {
     return redirect("/login");
   }
 
-  return <FileUploader user={user} />;
+  return (
+    <div>
+      <h1>Test</h1>
+    </div>
+  );
 }

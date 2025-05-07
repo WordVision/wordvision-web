@@ -1,10 +1,10 @@
-//components/UserLibrary.tsx
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { createClient } from "@/utils/supabase/client";
 import Link from "next/link";
 import Image from "next/image";
+import FileUploader, { FileUploaderHandle } from "./FileUploader";
 
 type Book = {
   id: string;
@@ -25,44 +25,34 @@ export default function UserLibrary({ user }: Props) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
-    const fetchUserBooks = async () => {
-      const supabase = createClient();
+  const uploaderRef = useRef<FileUploaderHandle>(null);
 
-      const { data: userBooks, error: userBooksError } = await supabase
-        .from("user_books")
-        .select("book_id")
-        .eq("user_id", user.id);
+  const fetchUserBooks = async () => {
+    const supabase = createClient();
 
-      if (userBooksError) {
-        setError("Could not load your books.");
-        setLoading(false);
-        return;
-      }
+    const { data: userBooks } = await supabase
+      .from("user_books")
+      .select("book_id")
+      .eq("user_id", user.id);
 
-      const bookIds = userBooks.map((entry) => entry.book_id);
+    const bookIds = userBooks?.map((entry) => entry.book_id) || [];
 
-      if (bookIds.length === 0) {
-        setBooks([]);
-        setLoading(false);
-        return;
-      }
-
-      const { data: booksData, error: booksError } = await supabase
-        .from("books")
-        .select("*")
-        .in("id", bookIds);
-
-      if (booksError) {
-        setError("Could not load books.");
-        setLoading(false);
-        return;
-      }
-
-      setBooks(booksData || []);
+    if (bookIds.length === 0) {
+      setBooks([]);
       setLoading(false);
-    };
+      return;
+    }
 
+    const { data: booksData } = await supabase
+      .from("books")
+      .select("*")
+      .in("id", bookIds);
+
+    setBooks(booksData || []);
+    setLoading(false);
+  };
+
+  useEffect(() => {
     fetchUserBooks();
   }, [user.id]);
 
@@ -70,14 +60,6 @@ export default function UserLibrary({ user }: Props) {
     return <div className="text-center py-8">Loading your library...</div>;
   if (error)
     return <div className="text-center py-8 text-red-500">{error}</div>;
-
-  if (books.length === 0) {
-    return (
-      <div className="text-center py-8 text-gray-600">
-        No books found in your library.
-      </div>
-    );
-  }
 
   return (
     <div className="p-4">
@@ -105,6 +87,25 @@ export default function UserLibrary({ user }: Props) {
           </Link>
         ))}
       </div>
+
+      {/* Floating + Button */}
+      <button
+        className="fixed bottom-6 right-6 bg-blue-600 text-white rounded-full w-14 h-14 shadow-lg hover:bg-blue-700 text-3xl flex items-center justify-center"
+        aria-label="Add Book"
+        onClick={() => uploaderRef.current?.openFilePicker()}
+      >
+        +
+      </button>
+
+      {/* Hidden uploader with callback */}
+      <FileUploader
+        ref={uploaderRef}
+        user={user}
+        onUploadComplete={() => {
+          setLoading(true); // Optional: show loading UI
+          fetchUserBooks();
+        }}
+      />
     </div>
   );
 }
