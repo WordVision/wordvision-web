@@ -2,8 +2,10 @@
 import Image from "next/image";
 import Link from "next/link";
 import { login } from "./actions";
+import { redirectIfLoggedIn } from "@/lib/redirectIfLoggedIn";
 
-export default function LoginPage() {
+export default async function LoginPage() {
+  await redirectIfLoggedIn();
   return (
     <div className="flex w-full min-h-screen bg-black">
       {/* Left Side - Decorative Section */}
