@@ -5,6 +5,7 @@ import { createClient } from "@/utils/supabase/client";
 import Link from "next/link";
 import Image from "next/image";
 import FileUploader, { FileUploaderHandle } from "./FileUploader";
+import { redirect } from "next/navigation";
 
 type Book = {
   id: string;
@@ -64,11 +65,25 @@ export default function UserLibrary({ user }: Props) {
 
   if (loading)
     return <div className="text-center py-8">Loading your library...</div>;
+
   if (error)
     return <div className="text-center py-8 text-red-500">{error}</div>;
 
   return (
     <div className="p-4">
+
+      <button
+        className="text-black bg-blue-600"
+        aria-label="sign out"
+        onClick={async () => {
+          const supabase = createClient();
+          await supabase.auth.signOut();
+          return redirect("/login");
+        }}
+      >
+        Sign out
+      </button>
+
       <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4 justify-center">
         {books.map((book) => (
           <Link key={book.id} href={`/book/${book.id}`}>
@@ -112,6 +127,7 @@ export default function UserLibrary({ user }: Props) {
           fetchUserBooks();
         }}
       />
+
     </div>
   );
 }
