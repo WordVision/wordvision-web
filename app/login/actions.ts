@@ -23,6 +23,6 @@ export async function login(formData: FormData) {
     redirect("/error");
   }
 
-  revalidatePath("/", "layout");
-  redirect("/");
+  revalidatePath("/library", "layout");
+  redirect("/library");
 }
