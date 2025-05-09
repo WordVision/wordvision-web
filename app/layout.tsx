@@ -16,7 +16,8 @@ const geistMono = Geist_Mono({
 
 export const metadata: Metadata = {
   title: "WordVision",
-  description: "WordVision transforms the ePub reading experience by integrating AI-powered image generation directly within the text. Readers can highlight any passage to generate custom visuals, creating an immersive and personalized journey through the content.",
+  description:
+    "WordVision transforms the ePub reading experience by integrating AI-powered image generation directly within the text. Readers can highlight any passage to generate custom visuals, creating an immersive and personalized journey through the content.",
   manifest: "/manifest.json",
   appleWebApp: {
     capable: true,
@@ -41,9 +42,13 @@ export default function RootLayout({
   return (
     <html lang="en">
       <head>
-        <link rel="apple-touch-icon" href="/icons/icon-192x192.png" />
+        <meta name="viewport" content="width=device-width, initial-scale=1" />
+        <meta name="theme-color" content="#8936FF" />
         <meta name="apple-mobile-web-app-capable" content="yes" />
         <meta name="format-detection" content="telephone=no" />
+        <link rel="apple-touch-icon" href="/icons/icon192.png" />
+        <link rel="manifest" href="/manifest.json" />
+        <link rel="icon" href="/favicon.png" />
       </head>
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
