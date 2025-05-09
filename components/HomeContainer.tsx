@@ -21,7 +21,7 @@ export default function HomeContainer() {
             <span className="moving-cursor"></span>
           </span>
         </h1>
-        <Link className="flex justify-center" href="/signup">
+        <Link className="flex justify-center" href="/login">
           <SignInBtn />
         </Link>
       </div>
