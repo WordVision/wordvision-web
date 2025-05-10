@@ -1,12 +1,12 @@
 "use client"
 
-import { useEffect, useRef, useState } from "react";
+import { use, useEffect, useRef, useState } from "react";
 import ePub, { NavItem, Rendition } from "epubjs";
 import Section from "epubjs/types/section";
 
 import { Button, ButtonIcon, ButtonText } from "@/components/ui/button";
 import { Spinner } from "@/components/ui/spinner";
-import ContextMenu from "./components/ContextMenu";
+import ContextMenu from "../components/ContextMenu";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import {
   Drawer,
@@ -18,7 +18,9 @@ import {
 } from "@/components/ui/drawer";
 import { Heading } from "@/components/ui/heading";
 import { Link, LinkText } from "@/components/ui/link";
-import ActionBar from "./components/ActionBar";
+import { createClient } from "@/utils/supabase/client";
+import ActionBar from "../components/ActionBar";
+import { redirect } from "next/navigation";
 
 const MIN_SWIPE_DISTANCE = 50; // Minimum distance in pixels for a swipe
 
@@ -37,20 +39,28 @@ interface Coordinates {
   y: number
 }
 
-export default function Reader() {
+export default function Reader({params}: {params : Promise<{bookId: string}>}) {
 
+  const { bookId } = use(params);
+  console.log({bookId});
+
+  // Book/epub related
   const [rendition, setRendition] = useState<Rendition | null>(null);
   const [bookLoaded, setBookLoaded] = useState<boolean>(false);
   const [selection, setSelection] = useState<BookSelection | null>(null);
 
+  // Context Menu
   const [menuPos, setMenuPos] = useState<Position>({top: 0, left: 0});
   const [showMenu, setShowMenu] = useState<boolean>(false);
 
+  // Table of Contents
   const [toc, setTOC] = useState<NavItem[]>([]);
   const [showTOC, setShowTOC] = useState<boolean>(false);
 
-  const [showNav, setShowNav] = useState<boolean>(false);
+  // For action bar
+  const [showActionBar, setShowActionBar] = useState<boolean>(false);
 
+  // For swipe gestures
   const [touchStart, setTouchStart] = useState<Coordinates>({x: 0, y: 0});
   const touchStartRef = useRef(touchStart);
   useEffect(() => {
@@ -59,6 +69,38 @@ export default function Reader() {
 
   useEffect(() => {
     (async () => {
+
+      const supabase = createClient();
+
+      // Get user
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        return redirect("/login");
+      }
+
+      // Check if user has right access to book
+      // If so, get the book url
+
+      const { data: userBook, error: userBooksError } = await supabase
+        .from("books")
+        .select()
+        .eq("id", bookId)
+        // .eq("id", "0b296a40-e9d9-44c6-b3e0-13f05937c2af")
+        // .eq("id", "1e8c29dc-1b83-45cf-ab4c-ecd16e572831")
+        // .eq("id", "38a4100f-f830-49a0-96db-10356a453952")
+        .single();
+
+
+      if (userBooksError) {
+        console.error(`Could not fetch book with id: ${bookId}`, userBooksError)
+        // setError("Could not fetch user books.");
+        // setLoading(false);
+        return;
+      }
+
+      console.log({userBook});
+
+
 
       const book = ePub("https://s3.amazonaws.com/moby-dick/OPS/package.opf");
       await book.ready;
@@ -145,7 +187,7 @@ export default function Reader() {
       }
       else {
         console.debug("tapped the center");
-        setShowNav(true);
+        setShowActionBar(true);
       }
     }
     // Else, if user horizontally swipes the screen.
@@ -208,9 +250,9 @@ export default function Reader() {
     <div className="h-screen relative flex flex-col justify-center items-center bg-red-200">
 
       <ActionBar
-        show={showNav}
+        show={showActionBar}
         tocHandler={() => setShowTOC(true)}
-        dismissHandler={() => setShowNav(false)}
+        dismissHandler={() => setShowActionBar(false)}
       />
 
       <div className="w-full h-full flex justify-center items-center">
@@ -291,7 +333,7 @@ export default function Reader() {
               onPress={() => {
                 rendition?.display(item.href)
                 setShowTOC(false);
-                setShowNav(false);
+                setShowActionBar(false);
               }}
             >
               <LinkText>{item.label}</LinkText>
