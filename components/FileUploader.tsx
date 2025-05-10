@@ -22,6 +22,7 @@ type Props = {
 
 const FileUploader = forwardRef<FileUploaderHandle, Props>(
   ({ user, onUploadComplete }, ref) => {
+
     const fileInputRef = useRef<HTMLInputElement>(null);
     const [uploading, setUploading] = useState(false);
     const supabse_url = process.env.NEXT_PUBLIC_SUPABASE_URL;
@@ -47,22 +48,24 @@ const FileUploader = forwardRef<FileUploaderHandle, Props>(
 
       setUploading(true);
 
-      const { error: uploadError } = await supabase.storage
+      const { data: uploadData, error: uploadError } = await supabase.storage
         .from("books")
         .upload(filePath, file);
 
-      if (uploadError) {
+      if (uploadError || !uploadData) {
         alert(`Upload failed: ${uploadError.message}`);
         setUploading(false);
         return;
       }
 
-      await saveMetadata(user, file, filePath);
+      console.log(uploadData);
+
+      await saveMetadata(user, file, uploadData.id);
       setUploading(false);
       onUploadComplete();
     };
 
-    const saveMetadata = async (user: any, file: File, filePath: string) => {
+    const saveMetadata = async (user: any, file: File, bookId: string) => {
       try {
         const arrayBuffer = await file.arrayBuffer();
         const book = ePub(arrayBuffer);
@@ -73,23 +76,19 @@ const FileUploader = forwardRef<FileUploaderHandle, Props>(
 
         const supabase = createClient();
 
-        const { data, error: insertError } = await supabase
+        const { error: insertError } = await supabase
           .from("books")
           .insert({
+            id: bookId,
             title,
             author,
             filename: file.name,
-            img_url: `${supabse_url}/storage/v1/object/public/books/${filePath}`,
           })
-          .select("id")
-          .single();
 
-        if (insertError || !data) {
+        if (insertError) {
           console.error("Insert error:", insertError?.message);
           return;
         }
-
-        const bookId = data.id;
 
         const { error: linkError } = await supabase.from("user_books").insert({
           user_id: user.id,
