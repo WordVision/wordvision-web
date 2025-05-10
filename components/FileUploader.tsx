@@ -58,8 +58,6 @@ const FileUploader = forwardRef<FileUploaderHandle, Props>(
         return;
       }
 
-      console.log(uploadData);
-
       await saveMetadata(user, file, uploadData.id);
       setUploading(false);
       onUploadComplete();
