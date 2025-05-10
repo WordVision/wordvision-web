@@ -86,7 +86,7 @@ export default function UserLibrary({ user }: Props) {
 
       <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4 justify-center">
         {books.map((book) => (
-          <Link key={book.id} href={`/book/${book.id}`}>
+          <Link key={book.id} href={`/reader/${book.id}`}>
             <div className="flex flex-col items-center cursor-pointer">
               {book.cover_url ? (
                 <Image
