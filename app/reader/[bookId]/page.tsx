@@ -3,25 +3,17 @@
 import { use, useEffect, useRef, useState } from "react";
 import ePub, { Contents, NavItem, Rendition } from "epubjs";
 import Section from "epubjs/types/section";
-
-import { Button, ButtonIcon, ButtonText } from "@/components/ui/button";
-import { Spinner } from "@/components/ui/spinner";
-import ContextMenu from "../components/ContextMenu";
-import { ChevronLeft, ChevronRight } from "lucide-react";
-import {
-  Drawer,
-  DrawerBackdrop,
-  DrawerBody,
-  DrawerContent,
-  DrawerFooter,
-  DrawerHeader
-} from "@/components/ui/drawer";
-import { Heading } from "@/components/ui/heading";
-import { Link, LinkText } from "@/components/ui/link";
-import { createClient } from "@/utils/supabase/client";
-import TopBar from "../components/TopBar";
 import { redirect } from "next/navigation";
+import { ChevronLeft, ChevronRight } from "lucide-react";
+
+import { createClient } from "@/utils/supabase/client";
+import { Spinner } from "@/components/ui/spinner";
+import { Button, ButtonIcon } from "@/components/ui/button";
+
+import TopBar from "../components/TopBar";
+import ContextMenu from "../components/ContextMenu";
 import TableOfContents from "../components/TableOfContents";
+import ImageVisualizer from "../components/ImageVisualizer";
 
 const MIN_SWIPE_DISTANCE = 50; // Minimum distance in pixels for a swipe
 
@@ -378,41 +370,13 @@ export default function Reader({params}: {params : Promise<{bookId: string}>}) {
 
     </div>
 
-    <Drawer
+    <ImageVisualizer
       isOpen={showBottomDrawer}
       onClose={() => {
         setShowBottomDrawer(false);
         setMarkClicked(false);
       }}
-      size="lg"
-      anchor="bottom"
-    >
-      <DrawerBackdrop />
-      <DrawerContent>
-
-        <DrawerHeader>
-          <Heading size="3xl">Visualizing</Heading>
-        </DrawerHeader>
-
-        <DrawerBody>
-          <p>hello</p>
-        </DrawerBody>
-
-        <DrawerFooter>
-          <Button
-            onPress={() => {
-              setShowBottomDrawer(false);
-              setMarkClicked(false);
-            }}
-            className="flex-1"
-          >
-            <ButtonText>Close</ButtonText>
-          </Button>
-        </DrawerFooter>
-
-      </DrawerContent>
-    </Drawer>
-
+    />
 
     <TableOfContents
       isOpen={showTOC}
