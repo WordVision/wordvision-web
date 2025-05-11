@@ -10,6 +10,7 @@ import {
 } from "react";
 import { createClient } from "@/utils/supabase/client";
 import ePub from "epubjs";
+import { create } from "domain";
 
 export type FileUploaderHandle = {
   openFilePicker: () => void;
@@ -25,7 +26,6 @@ const FileUploader = forwardRef<FileUploaderHandle, Props>(
 
     const fileInputRef = useRef<HTMLInputElement>(null);
     const [uploading, setUploading] = useState(false);
-    const supabse_url = process.env.NEXT_PUBLIC_SUPABASE_URL;
 
     useImperativeHandle(ref, () => ({
       openFilePicker: () => {
@@ -43,14 +43,15 @@ const FileUploader = forwardRef<FileUploaderHandle, Props>(
         return;
       }
 
-      const filePath = `${Date.now()}-${file.name}`;
+      const filePath = file.name;
       const supabase = createClient();
 
       setUploading(true);
 
+      // Upload book
       const { data: uploadData, error: uploadError } = await supabase.storage
         .from("books")
-        .upload(filePath, file);
+        .upload(`${user.id}/${filePath}`, file);
 
       if (uploadError || !uploadData) {
         alert(`Upload failed: ${uploadError.message}`);
@@ -80,7 +81,7 @@ const FileUploader = forwardRef<FileUploaderHandle, Props>(
             id: bookId,
             title,
             author,
-            filename: file.name,
+            filename: `${user.id}/${file.name}`,
           })
 
         if (insertError) {
