@@ -19,7 +19,7 @@ import {
 import { Heading } from "@/components/ui/heading";
 import { Link, LinkText } from "@/components/ui/link";
 import { createClient } from "@/utils/supabase/client";
-import ActionBar from "../components/ActionBar";
+import TopBar from "../components/TopBar";
 
 const MIN_SWIPE_DISTANCE = 50; // Minimum distance in pixels for a swipe
 
@@ -56,8 +56,8 @@ export default function Reader({params}: {params : Promise<{bookId: string}>}) {
   const [toc, setTOC] = useState<NavItem[]>([]);
   const [showTOC, setShowTOC] = useState<boolean>(false);
 
-  // For action bar
-  const [showActionBar, setShowActionBar] = useState<boolean>(false);
+  // For top bar
+  const [showTopBar, setShowTopBar] = useState<boolean>(false);
 
   // For swipe gestures
   const [touchStart, setTouchStart] = useState<Coordinates>({x: 0, y: 0});
@@ -185,7 +185,7 @@ export default function Reader({params}: {params : Promise<{bookId: string}>}) {
       }
       else {
         console.debug("tapped the center");
-        setShowActionBar(true);
+        setShowTopBar(true);
       }
     }
     // Else, if user horizontally swipes the screen.
@@ -247,11 +247,13 @@ export default function Reader({params}: {params : Promise<{bookId: string}>}) {
   return (<>
     <div className="h-screen relative flex flex-col justify-center items-center bg-red-200">
 
-      <ActionBar
-        show={showActionBar}
+      <TopBar
+        show={showTopBar}
         tocHandler={() => setShowTOC(true)}
-        dismissHandler={() => setShowActionBar(false)}
+        dismissHandler={() => setShowTopBar(false)}
       />
+
+
 
       <div className="w-full h-full flex justify-center items-center">
         {bookLoaded &&
@@ -331,7 +333,7 @@ export default function Reader({params}: {params : Promise<{bookId: string}>}) {
               onPress={() => {
                 rendition?.display(item.href)
                 setShowTOC(false);
-                setShowActionBar(false);
+                setShowTopBar(false);
               }}
             >
               <LinkText>{item.label}</LinkText>

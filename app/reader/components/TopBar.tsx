@@ -2,13 +2,13 @@ import { Button, ButtonIcon } from "@/components/ui/button";
 import { ArrowLeft, TableOfContents } from "lucide-react";
 import Link from "next/link";
 
-interface ActionBarProps {
+interface TopBarProps {
   show: boolean;
   dismissHandler: () => void;
   tocHandler: () => void;
 }
 
-export default function ActionBar(p: ActionBarProps) {
+export default function TopBar(p: TopBarProps) {
 
   return (<>
       {p.show &&
@@ -25,7 +25,6 @@ export default function ActionBar(p: ActionBarProps) {
             variant="outline"
             action="primary"
             className="text-white"
-            onPress={p.tocHandler}
           >
             <ButtonIcon as={ArrowLeft} />
           </Button>
