@@ -20,6 +20,7 @@ import { Heading } from "@/components/ui/heading";
 import { Link, LinkText } from "@/components/ui/link";
 import { createClient } from "@/utils/supabase/client";
 import TopBar from "../components/TopBar";
+import { redirect } from "next/navigation";
 
 const MIN_SWIPE_DISTANCE = 50; // Minimum distance in pixels for a swipe
 
@@ -253,8 +254,6 @@ export default function Reader({params}: {params : Promise<{bookId: string}>}) {
         dismissHandler={() => setShowTopBar(false)}
       />
 
-
-
       <div className="w-full h-full flex justify-center items-center">
         {bookLoaded &&
           <Button
@@ -282,16 +281,42 @@ export default function Reader({params}: {params : Promise<{bookId: string}>}) {
                 // @ts-ignore: DO NOT REMOVE THIS COMMENT
                 rendition.getContents()[0]?.window?.getSelection()?.removeAllRanges();
               }}
+              visualizeHandler={async () => {
+                console.debug({selection});
 
-              highlightHandler={() => {
-                rendition?.annotations.highlight(selection?.location!);
-                setShowMenu(false);
-                setSelection(null);
+                if (selection) {
+                  const supabase = createClient();
+
+                  const { data: { user }} = await supabase.auth.getUser();
+                  if (!user) {
+                    return redirect("/login");
+                  }
+
+                  const { error: insertError } = await supabase
+                    .from("highlights")
+                    .insert({
+                      user_id: user.id,
+                      book_id: bookId,
+                      text: selection.text,
+                      location: selection.location
+                    })
+
+                  if (insertError) {
+                    console.error("unable to save highlight error:", insertError?.message);
+                    return;
+                  }
+
+                  rendition?.annotations.highlight(selection.location);
+                  setShowMenu(false);
+                  setSelection(null);
+                }
+                else {
+                  console.error("No Selection");
+                }
+
                 // @ts-ignore: DO NOT REMOVE THIS COMMENT
                 rendition.getContents()[0]?.window?.getSelection()?.removeAllRanges();
-                console.log(selection)
               }}
-              visualizeHandler={() => console.log(selection)}
             />
           }
         </div>
@@ -309,6 +334,7 @@ export default function Reader({params}: {params : Promise<{bookId: string}>}) {
           </Button>
         }
       </div>
+
     </div>
 
     <Drawer
