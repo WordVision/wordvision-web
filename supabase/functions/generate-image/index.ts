@@ -1,14 +1,28 @@
 import { HfInference } from "@huggingface/inference";
-import { SupabaseClient } from "../_shared/supabaseClient";
+import { createClient } from "@supabase/supabase-js";
+import { corsHeaders } from '../_shared/cors.ts'
 
 Deno.serve(async (req: Request) => {
+
+  // This is needed for invoking from a browser.
+  if (req.method === 'OPTIONS') {
+    return new Response('ok', { headers: corsHeaders })
+  }
+
   try {
     console.log("📩 Received request");
 
     const { image_id, prompt } = await req.json();
     console.log("📝 Request body parsed:", { image_id, prompt });
 
-    const supabase = SupabaseClient(req);
+    const supabase = createClient(
+      Deno.env.get("SUPABASE_URL") ?? "",
+      Deno.env.get("SUPABASE_ANON_KEY") ?? "",
+      {
+        global: { headers: { Authorization: req.headers.get("Authorization")! } },
+      },
+    );
+
     console.log("🔑 Supabase client initialized");
 
     const getUserRes = await supabase.auth.getUser();
@@ -21,7 +35,7 @@ Deno.serve(async (req: Request) => {
         JSON.stringify({ error: getUserRes.error.message ?? "Unauthorized" }),
         {
           status,
-          headers: { "Content-Type": "application/json" },
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
         }
       );
     }
@@ -83,7 +97,7 @@ Deno.serve(async (req: Request) => {
       console.error("📦 Upload to storage failed:", uploadToStorageRes.error);
       return new Response(JSON.stringify(uploadToStorageRes.error), {
         status: 500,
-        headers: { "Content-Type": "application/json" },
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
 
@@ -96,10 +110,15 @@ Deno.serve(async (req: Request) => {
 
     console.log("🌐 Public image URL generated:", publicUrl);
 
-    return Response.json({
-      img_url: publicUrl,
-    });
-  } catch (err: unknown) {
+    return new Response(JSON.stringify({
+      img_url: publicUrl
+    }), {
+      status: 200,
+      headers: { ...corsHeaders, "Content-Type": "application/json" },
+    })
+
+  }
+  catch (err: unknown) {
     const errorMessage =
       err instanceof Error ? err.message : "Unhandled error occurred";
     console.error("💥 Top-level error:", err);
@@ -112,7 +131,7 @@ Deno.serve(async (req: Request) => {
       }),
       {
         status: 500,
-        headers: { "Content-Type": "application/json" },
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
       }
     );
   }
@@ -122,13 +141,13 @@ async function generateImage(prompt: string): Promise<Blob> {
   console.log("🤖 Calling Hugging Face with prompt:", prompt);
   const hf = new HfInference(Deno.env.get("HUGGING_FACE_ACCESS_TOKEN"));
   console.log("🔐 Loaded HF token:", Deno.env.get("HUGGING_FACE_ACCESS_TOKEN"));
-  
+
   // Remove the invalid use_cache option
   const image = await hf.textToImage({
     inputs: prompt,
     model: "stabilityai/stable-diffusion-3.5-large-turbo",
   });
-  
+
   console.log("🎨 Hugging Face returned image blob");
   return image;
 }
