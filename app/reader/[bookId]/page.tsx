@@ -108,6 +108,24 @@ export default function Reader({params}: {params : Promise<{bookId: string}>}) {
       setTOC(book.navigation.toc);
 
       const rendition = book.renderTo("reader", { width: "100%", height: "100%" });
+
+      // Get book highlights
+      const { data: bookHighlights, error: bookHighlightsError } = await supabase
+        .from("highlights")
+        .select()
+        .eq("book_id", bookId)
+
+      if (bookHighlightsError) {
+        console.error(`Could not fetch book highlights: `, bookHighlights)
+        return;
+      }
+
+      console.log({bookHighlights});
+
+      bookHighlights.forEach(h => {
+        rendition?.annotations.highlight(h.location);
+      })
+
       rendition.display();
 
       rendition.on("selected", (cfiRange: string) => {
