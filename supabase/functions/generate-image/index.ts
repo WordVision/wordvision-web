@@ -1,6 +1,6 @@
 import { HfInference } from "@huggingface/inference";
 import { createClient } from "@supabase/supabase-js";
-import { corsHeaders } from '../_shared/cors.ts'
+import { corsHeaders } from '../_shared/cors'
 
 Deno.serve(async (req: Request) => {
 

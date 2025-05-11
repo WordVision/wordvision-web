@@ -10,7 +10,6 @@ import {
 } from "react";
 import { createClient } from "@/utils/supabase/client";
 import ePub from "epubjs";
-import { create } from "domain";
 
 export type FileUploaderHandle = {
   openFilePicker: () => void;

@@ -1,7 +1,7 @@
 "use client"
 
 import { use, useEffect, useRef, useState } from "react";
-import ePub, { Contents, NavItem, Rendition } from "epubjs";
+import ePub, { NavItem, Rendition } from "epubjs";
 import Section from "epubjs/types/section";
 import { redirect } from "next/navigation";
 import { ChevronLeft, ChevronRight } from "lucide-react";
@@ -145,12 +145,11 @@ export default function Reader({params}: {params : Promise<{bookId: string}>}) {
         setSelection(selection);
       });
 
-      rendition.on("markClicked", (cfiRange: string, data: {img_url: string}, contents: Contents) => {
+      rendition.on("markClicked", (cfiRange: string, data: {img_url: string}) => {
         setMarkClicked(true);
-        console.log("markClicked: ", {cfiRange});
+        console.log("markClicked: ", {cfiRange, data});
         setShowImageViewer(true);
         setImgUrl(data.img_url);
-
       });
 
       rendition.on("rendered", (_: Section, view: any) => {
@@ -181,7 +180,7 @@ export default function Reader({params}: {params : Promise<{bookId: string}>}) {
       setRendition(rendition);
 
     })();
-  }, []);
+  }, [bookId]);
 
 
   // OnTouchEnd Event Handler

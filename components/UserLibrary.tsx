@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { createClient } from "@/utils/supabase/client";
 import Link from "next/link";
 import Image from "next/image";
@@ -28,7 +28,7 @@ export default function UserLibrary({ user }: Props) {
 
   const uploaderRef = useRef<FileUploaderHandle>(null);
 
-  const fetchUserBooks = async () => {
+  const fetchUserBooks = useCallback(async () => {
     const supabase = createClient();
 
     const { data: userBooks, error: userBooksError } = await supabase
@@ -57,11 +57,11 @@ export default function UserLibrary({ user }: Props) {
 
     setBooks(booksData || []);
     setLoading(false);
-  };
+  }, [user.id]);
 
   useEffect(() => {
     fetchUserBooks();
-  }, [user.id]);
+  }, [fetchUserBooks, user.id]);
 
   if (loading)
     return <div className="text-center py-8">Loading your library...</div>;
