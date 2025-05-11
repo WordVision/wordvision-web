@@ -21,6 +21,7 @@ import { Link, LinkText } from "@/components/ui/link";
 import { createClient } from "@/utils/supabase/client";
 import TopBar from "../components/TopBar";
 import { redirect } from "next/navigation";
+import TableOfContents from "../components/TableOfContents";
 
 const MIN_SWIPE_DISTANCE = 50; // Minimum distance in pixels for a swipe
 
@@ -413,48 +414,18 @@ export default function Reader({params}: {params : Promise<{bookId: string}>}) {
     </Drawer>
 
 
-    <Drawer
+    <TableOfContents
       isOpen={showTOC}
       onClose={() => {
         setShowTOC(false)
       }}
-      size="lg"
-      anchor="left"
-    >
-      <DrawerBackdrop />
-      <DrawerContent>
+      toc={toc}
+      onItemPress={(item) => {
+        rendition?.display(item.href)
+        setShowTOC(false);
+        setShowTopBar(false);
+      }}
+    />
 
-        <DrawerHeader>
-          <Heading size="3xl">Table of Contents</Heading>
-        </DrawerHeader>
-
-        <DrawerBody>
-          {toc.map((item, i) => (
-            <Link
-              key={i}
-              onPress={() => {
-                rendition?.display(item.href)
-                setShowTOC(false);
-                setShowTopBar(false);
-              }}
-            >
-              <LinkText>{item.label}</LinkText>
-            </Link>
-          ))}
-        </DrawerBody>
-
-        <DrawerFooter>
-          <Button
-            onPress={() => {
-              setShowTOC(false)
-            }}
-            className="flex-1"
-          >
-            <ButtonText>Close</ButtonText>
-          </Button>
-        </DrawerFooter>
-
-      </DrawerContent>
-    </Drawer>
   </>);
 }
