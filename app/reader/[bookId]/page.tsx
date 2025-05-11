@@ -16,23 +16,14 @@ import ContextMenu from "../components/ContextMenu";
 import TableOfContents from "../components/TableOfContents";
 import ImageVisualizer from "../components/ImageVisualizer";
 
+import type {
+  BookSelection,
+  Visualization,
+  Position,
+  Coordinates
+} from "../types";
 
 const MIN_SWIPE_DISTANCE = 50; // Minimum distance in pixels for a swipe
-
-interface BookSelection {
-  text: string;
-  location: string;
-}
-
-interface Position {
-  top: number;
-  left: number;
-}
-
-interface Coordinates {
-  x: number;
-  y: number
-}
 
 export default function Reader({params}: {params : Promise<{bookId: string}>}) {
 
