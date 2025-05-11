@@ -1,7 +1,7 @@
 "use client"
 
 import { use, useEffect, useRef, useState } from "react";
-import ePub, { NavItem, Rendition } from "epubjs";
+import ePub, { Contents, NavItem, Rendition } from "epubjs";
 import Section from "epubjs/types/section";
 
 import { Button, ButtonIcon, ButtonText } from "@/components/ui/button";
@@ -60,12 +60,22 @@ export default function Reader({params}: {params : Promise<{bookId: string}>}) {
   // For top bar
   const [showTopBar, setShowTopBar] = useState<boolean>(false);
 
+  // For Bottom drawer
+  const [showBottomDrawer, setShowBottomDrawer] = useState<boolean>(false);
+
   // For swipe gestures
   const [touchStart, setTouchStart] = useState<Coordinates>({x: 0, y: 0});
   const touchStartRef = useRef(touchStart);
   useEffect(() => {
     touchStartRef.current = touchStart;
   }, [touchStart])
+
+  // Mark clicked
+  const [markClicked, setMarkClicked] = useState<boolean>(false);
+  const markClickedRef = useRef(markClicked);
+  useEffect(() => {
+    markClickedRef.current = markClicked;
+  }, [markClicked])
 
   useEffect(() => {
     (async () => {
@@ -137,6 +147,12 @@ export default function Reader({params}: {params : Promise<{bookId: string}>}) {
         setSelection(selection);
       });
 
+      rendition.on("markClicked", (cfiRange: string, data: object, contents: Contents) => {
+        setMarkClicked(true);
+        console.log("markClicked: ", {cfiRange});
+        setShowBottomDrawer(true);
+      });
+
       rendition.on("rendered", (_: Section, view: any) => {
         console.debug("rendered view:", {view})
 
@@ -173,6 +189,12 @@ export default function Reader({params}: {params : Promise<{bookId: string}>}) {
     console.debug("ontouchend flip page", e)
 
     e.preventDefault();
+
+    for (const el of e.composedPath()) {
+      console.debug({el});
+    }
+
+    if (markClickedRef.current) return;
 
     const readerWidth = e.view?.outerWidth!;
 
@@ -354,6 +376,42 @@ export default function Reader({params}: {params : Promise<{bookId: string}>}) {
       </div>
 
     </div>
+
+    <Drawer
+      isOpen={showBottomDrawer}
+      onClose={() => {
+        setShowBottomDrawer(false);
+        setMarkClicked(false);
+      }}
+      size="lg"
+      anchor="bottom"
+    >
+      <DrawerBackdrop />
+      <DrawerContent>
+
+        <DrawerHeader>
+          <Heading size="3xl">Visualizing</Heading>
+        </DrawerHeader>
+
+        <DrawerBody>
+          <p>hello</p>
+        </DrawerBody>
+
+        <DrawerFooter>
+          <Button
+            onPress={() => {
+              setShowBottomDrawer(false);
+              setMarkClicked(false);
+            }}
+            className="flex-1"
+          >
+            <ButtonText>Close</ButtonText>
+          </Button>
+        </DrawerFooter>
+
+      </DrawerContent>
+    </Drawer>
+
 
     <Drawer
       isOpen={showTOC}
