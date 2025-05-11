@@ -22,6 +22,7 @@ import type {
   Position,
   Coordinates
 } from "../types";
+import LoadingModal from "../components/LoadingModal";
 
 const MIN_SWIPE_DISTANCE = 50; // Minimum distance in pixels for a swipe
 
@@ -63,6 +64,10 @@ export default function Reader({params}: {params : Promise<{bookId: string}>}) {
   useEffect(() => {
     markClickedRef.current = markClicked;
   }, [markClicked])
+
+  // Loading Modal
+  const [loading, setLoading] = useState<boolean>(false);
+  const [loadingMessage, setLoadingMessage] = useState<string>("");
 
 
   useEffect(() => {
@@ -496,13 +501,23 @@ export default function Reader({params}: {params : Promise<{bookId: string}>}) {
       onClose={closeImageVisualizer}
       onDelete={async (v: Visualization) => {
         try {
+          setLoadingMessage("Deleting Visualization...")
+          setLoading(true);
           await deleteVisualization(v);
           closeImageVisualizer();
+          setLoading(false);
+          setLoadingMessage("")
         }
         catch(error) {
           console.error("Delete Visualization Error: ", error);
         }
       }}
+    />
+
+    <LoadingModal
+      isOpen={loading}
+      onClose={() => setLoading(false)}
+      text={loadingMessage}
     />
 
   </>);
