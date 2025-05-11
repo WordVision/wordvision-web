@@ -65,63 +65,38 @@ export default function Reader({params}: {params : Promise<{bookId: string}>}) {
   }, [markClicked])
 
 
-
   useEffect(() => {
     (async () => {
-
-      const supabase = createClient();
-
-      // Get book by id
-      const { data: userBook, error: userBooksError } = await supabase
-        .from("books")
-        .select()
-        .eq("id", bookId)
-        .single();
-
-      if (userBooksError) {
-        console.error(`Could not fetch book with id: ${bookId}`, userBooksError)
-        return;
+      // Download book
+      let bookData;
+      try {
+        bookData = await downloadBookData(bookId)
       }
-
-      // Create signed url for book
-      const { data: urlData, error: urlError } = await supabase
-        .storage
-        .from("books")
-        .createSignedUrl(userBook.filename, 3600);
-
-      if (urlError) {
-        console.error(`Could not create signed url for book with id: ${bookId}`, urlError);
-        return;
+      catch (error) {
+        console.error("Error downloading book from remote: ", error);
+        return
       }
-
-      // Fetch book data from url
-      const res = await fetch(urlData.signedUrl);
-      const blob = await res.blob();
-      const data = await blob.arrayBuffer();
 
       // Load book data
-      const book = ePub(data);
+      const book = ePub(bookData);
       await book.ready;
-
       setBookLoaded(true)
+
+      // Set table of contents data
       setTOC(book.navigation.toc);
 
+      // Setup epub rendition
       const rendition = book.renderTo("reader", { width: "100%", height: "100%" });
 
-      // Get book highlights
-      const { data: bookHighlights, error: bookHighlightsError } = await supabase
-        .from("highlights")
-        .select()
-        .eq("book_id", bookId)
-
-      if (bookHighlightsError) {
-        console.error(`Could not fetch book highlights: `, bookHighlights)
-        return;
-      }
-
-      console.log({bookHighlights});
-
       // Load book highlights onto epub rendition
+      let bookHighlights;
+      try{
+        bookHighlights = await getBookHighlights(bookId);
+      }
+      catch (error) {
+        console.error("Error retrieving book highlights: ", error);
+        return
+      }
       bookHighlights.forEach(h => {
         const hData: Visualization = {
           id: h.id,
@@ -134,8 +109,7 @@ export default function Reader({params}: {params : Promise<{bookId: string}>}) {
         rendition?.annotations.highlight(h.location, hData);
       })
 
-      rendition.display();
-
+      // Setup rendtion event handlers
       rendition.on("selected", (cfiRange: string) => {
         const selection = {
           text: rendition.getRange(cfiRange).toString(),
@@ -154,31 +128,19 @@ export default function Reader({params}: {params : Promise<{bookId: string}>}) {
 
       rendition.on("rendered", (_: Section, view: any) => {
         console.debug("rendered view:", {view})
-
         const viewDoc: Document = view.document;
-
         // Set event handlers for the document
         viewDoc.oncontextmenu = e => e.preventDefault();
         viewDoc.onmouseup = showMenuForSelection;
         viewDoc.ontouchcancel = showMenuForSelection;
         viewDoc.onselectionchange = calculateMenuPosition;
-        viewDoc.ontouchstart = (e) => {
-          // Make sure endX is within the bounds of readerWidth
-          const readerWidth = e.view?.outerWidth!;
-          let x = e.changedTouches[0].clientX;
-          while (x > readerWidth) {
-            x -= readerWidth;
-          }
-          setTouchStart({
-            x,
-            y: e.changedTouches[0].clientY,
-          })
-        };
+        viewDoc.ontouchstart = recordTouchStartCoordinates;
         viewDoc.ontouchend = (e) => { flipPage(e, rendition) };
       })
 
+      // Display rendition
+      rendition.display();
       setRendition(rendition);
-
     })();
   }, [bookId]);
 
@@ -284,6 +246,167 @@ export default function Reader({params}: {params : Promise<{bookId: string}>}) {
   }
 
 
+  // OnTouchStart Event Handler
+  function recordTouchStartCoordinates(e: TouchEvent) {
+    // Make sure startX is within the bounds of readerWidth
+    const readerWidth = e.view?.outerWidth!;
+    let x = e.changedTouches[0].clientX;
+    while (x > readerWidth) {
+      x -= readerWidth;
+    }
+    setTouchStart({
+      x,
+      y: e.changedTouches[0].clientY,
+    })
+  }
+
+
+  async function downloadBookData(bookId: string): Promise<ArrayBuffer> {
+    const supabase = createClient();
+
+    // Get book by id
+    const { data: userBook, error: userBooksError } = await supabase
+      .from("books")
+      .select()
+      .eq("id", bookId)
+      .single();
+
+    if (userBooksError) {
+      console.error(`Could not fetch book with id: ${bookId}`, userBooksError)
+      throw userBooksError;
+    }
+
+    // Create signed url for book
+    const { data: urlData, error: urlError } = await supabase
+      .storage
+      .from("books")
+      .createSignedUrl(userBook.filename, 3600);
+
+    if (urlError) {
+      console.error(`Could not create signed url for book with id: ${bookId}`, urlError);
+      throw urlError;
+    }
+
+    // Fetch book data from url
+    const res = await fetch(urlData.signedUrl);
+    const blob = await res.blob();
+
+    return await blob.arrayBuffer();
+  }
+
+
+  async function getBookHighlights(bookId: string): Promise<Visualization[]> {
+    const supabase = createClient();
+
+    // Get book highlights
+    const { data: bookHighlights, error: bookHighlightsError } = await supabase
+      .from("highlights")
+      .select()
+      .eq("book_id", bookId)
+
+    if (bookHighlightsError) {
+      console.error("Could not fetch book highlights: ", bookHighlights)
+      throw bookHighlightsError;
+    }
+
+    console.log({bookHighlights});
+
+    return bookHighlights
+  }
+
+
+  async function visualize(s: BookSelection) {
+    const supabase = createClient();
+
+    // Generate image from prompt and get url
+    const image_id = uuidv4();
+    const {data: genImage, error: genImageError} = await supabase.functions.invoke<{img_url: string}>('generate-image', {
+      body: {
+        image_id,
+        prompt: s.text,
+      },
+    });
+
+    if (!genImage || genImageError) {
+      console.error("function visualizeHighlight: genImageRes Error", genImageError)
+       return;
+    }
+    // Get user data - need for id
+    const { data: { user }} = await supabase.auth.getUser();
+    if (!user) {
+      return redirect("/login");
+    }
+
+    // Insert new visualized highlight
+    const {data: insertData, error: insertError } = await supabase
+      .from("highlights")
+      .insert({
+        user_id: user.id,
+        book_id: bookId,
+        text: s.text,
+        location: s.location,
+        img_url: genImage.img_url,
+        img_prompt: s.text,
+      })
+      .select()
+      .single();
+
+    if (insertError) {
+      console.error("unable to save highlight error:", insertError?.message);
+      return;
+    }
+    // Add new annotation the current epub rendition
+    rendition?.annotations.highlight(s.location, {img_url: genImage.img_url});
+
+    setVisualization({
+      id: insertData.id,
+      text: insertData.text,
+      location: insertData.location,
+      img_url: insertData.img_url,
+      img_prompt: insertData.img_prompt
+    })
+  }
+
+
+  async function deleteVisualization(v: Visualization) {
+    const supabase = createClient();
+
+    // Get image path
+    const imgPath = v.img_url.split("images/")[1];
+
+    // Delete image
+    const { error: deleteImageError } = await supabase
+      .storage
+      .from('images')
+      .remove([imgPath])
+
+    if (deleteImageError) {
+      console.error("Error deleting image: ", deleteImageError);
+      throw deleteImageError;
+    }
+
+    // Delete highlight
+    const response = await supabase
+      .from('highlights')
+      .delete()
+      .eq('id', v.id);
+
+    if (response.error) {
+      console.error("Error deleting highlight metadata: ", response.error);
+      throw response.error;
+    }
+    // Remove highlight from rendition
+    rendition?.annotations.remove(v.location, "highlight");
+  }
+
+
+  function closeImageVisualizer() {
+    setShowImageViewer(false);
+    setMarkClicked(false);
+    setVisualization(undefined)
+  }
+
+
   return (<>
     <div className="h-screen relative flex flex-col justify-center items-center bg-red-200">
 
@@ -308,7 +431,7 @@ export default function Reader({params}: {params : Promise<{bookId: string}>}) {
         }
 
         <div id="reader" className="relative bg-white h-full w-full lg:w-1/2">
-          {!bookLoaded && <Spinner />}
+          {!bookLoaded && <Spinner className="self-center"/>}
 
           {showMenu &&
             <ContextMenu
@@ -322,67 +445,15 @@ export default function Reader({params}: {params : Promise<{bookId: string}>}) {
               }}
               visualizeHandler={async () => {
                 console.debug({selection});
-
                 if (selection) {
                   setShowMenu(false);
                   setSelection(null);
                   setShowImageViewer(true);
-
-                  const supabase = createClient();
-
-                  // Generate image from prompt and get url
-                  const image_id = uuidv4();
-                  const {data: genImage, error: genImageError} = await supabase.functions.invoke<{img_url: string}>('generate-image', {
-                    body: {
-                      image_id,
-                      prompt: selection.text,
-                    },
-                  });
-
-                  if (!genImage || genImageError) {
-                    console.error("function visualizeHighlight: genImageRes Error", genImageError)
-                     return;
-                  }
-
-                  // Get user data - need for id
-                  const { data: { user }} = await supabase.auth.getUser();
-                  if (!user) {
-                    return redirect("/login");
-                  }
-
-                  // Insert new visualized highlight
-                  const {data: insertData, error: insertError } = await supabase
-                    .from("highlights")
-                    .insert({
-                      user_id: user.id,
-                      book_id: bookId,
-                      text: selection.text,
-                      location: selection.location,
-                      img_url: genImage.img_url,
-                      img_prompt: selection.text,
-                    })
-                    .select()
-                    .single();
-
-                  if (insertError) {
-                    console.error("unable to save highlight error:", insertError?.message);
-                    return;
-                  }
-
-                  rendition?.annotations.highlight(selection.location, {img_url: genImage.img_url});
-
-                  setVisualization({
-                    id: insertData.id,
-                    text: insertData.text,
-                    location: insertData.location,
-                    img_url: insertData.img_url,
-                    img_prompt: insertData.img_prompt
-                  })
+                  await visualize(selection);
                 }
                 else {
                   console.error("No Selection");
                 }
-
                 // @ts-ignore: DO NOT REMOVE THIS COMMENT
                 rendition.getContents()[0]?.window?.getSelection()?.removeAllRanges();
               }}
@@ -406,53 +477,6 @@ export default function Reader({params}: {params : Promise<{bookId: string}>}) {
 
     </div>
 
-    <ImageVisualizer
-      isOpen={showImageViewer}
-      visualization={visualization}
-      onClose={() => {
-        setShowImageViewer(false);
-        setMarkClicked(false);
-        setVisualization(undefined)
-      }}
-      onDelete={async (v: Visualization) => {
-        // Create supabase client
-        const supabase = createClient();
-
-        // Get image path
-        const imgPath = v.img_url.split("images/")[1];
-
-        // Delete image
-        const { error: deleteImageError } = await supabase
-          .storage
-          .from('images')
-          .remove([imgPath])
-
-        if (deleteImageError) {
-          console.error("Error deleting image: ", deleteImageError);
-          return;
-        }
-
-        // Delete highlight
-        const response = await supabase
-          .from('highlights')
-          .delete()
-          .eq('id', v.id);
-
-        if (response.error) {
-          console.error("Error deleting highlight metadata: ", response.error);
-          return;
-        }
-
-        // Remove highlight from rendition
-        rendition?.annotations.remove(v.location, "highlight");
-
-        setShowImageViewer(false);
-        setMarkClicked(false);
-        setVisualization(undefined)
-      }}
-
-    />
-
     <TableOfContents
       isOpen={showTOC}
       onClose={() => {
@@ -463,6 +487,21 @@ export default function Reader({params}: {params : Promise<{bookId: string}>}) {
         rendition?.display(item.href)
         setShowTOC(false);
         setShowTopBar(false);
+      }}
+    />
+
+    <ImageVisualizer
+      isOpen={showImageViewer}
+      visualization={visualization}
+      onClose={closeImageVisualizer}
+      onDelete={async (v: Visualization) => {
+        try {
+          await deleteVisualization(v);
+          closeImageVisualizer();
+        }
+        catch(error) {
+          console.error("Delete Visualization Error: ", error);
+        }
       }}
     />
 
