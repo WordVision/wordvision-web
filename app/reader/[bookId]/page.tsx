@@ -20,7 +20,6 @@ import { Heading } from "@/components/ui/heading";
 import { Link, LinkText } from "@/components/ui/link";
 import { createClient } from "@/utils/supabase/client";
 import ActionBar from "../components/ActionBar";
-import { redirect } from "next/navigation";
 
 const MIN_SWIPE_DISTANCE = 50; // Minimum distance in pixels for a swipe
 
@@ -72,37 +71,36 @@ export default function Reader({params}: {params : Promise<{bookId: string}>}) {
 
       const supabase = createClient();
 
-      // Get user
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) {
-        return redirect("/login");
-      }
-
-      // Check if user has right access to book
-      // If so, get the book url
-
+      // Get book by id
       const { data: userBook, error: userBooksError } = await supabase
         .from("books")
         .select()
         .eq("id", bookId)
-        // .eq("id", "0b296a40-e9d9-44c6-b3e0-13f05937c2af")
-        // .eq("id", "1e8c29dc-1b83-45cf-ab4c-ecd16e572831")
-        // .eq("id", "38a4100f-f830-49a0-96db-10356a453952")
         .single();
-
 
       if (userBooksError) {
         console.error(`Could not fetch book with id: ${bookId}`, userBooksError)
-        // setError("Could not fetch user books.");
-        // setLoading(false);
         return;
       }
 
-      console.log({userBook});
+      // Create signed url for book
+      const { data: urlData, error: urlError } = await supabase
+        .storage
+        .from("books")
+        .createSignedUrl(userBook.filename, 3600);
 
+      if (urlError) {
+        console.error(`Could not create signed url for book with id: ${bookId}`, urlError);
+        return;
+      }
 
+      // Fetch book data from url
+      const res = await fetch(urlData.signedUrl);
+      const blob = await res.blob();
+      const data = await blob.arrayBuffer();
 
-      const book = ePub("https://s3.amazonaws.com/moby-dick/OPS/package.opf");
+      // Load book data
+      const book = ePub(data);
       await book.ready;
 
       setBookLoaded(true)
