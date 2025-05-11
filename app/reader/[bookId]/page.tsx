@@ -5,6 +5,7 @@ import ePub, { Contents, NavItem, Rendition } from "epubjs";
 import Section from "epubjs/types/section";
 import { redirect } from "next/navigation";
 import { ChevronLeft, ChevronRight } from "lucide-react";
+import { v4 as uuidv4 } from 'uuid';
 
 import { createClient } from "@/utils/supabase/client";
 import { Spinner } from "@/components/ui/spinner";
@@ -14,6 +15,7 @@ import TopBar from "../components/TopBar";
 import ContextMenu from "../components/ContextMenu";
 import TableOfContents from "../components/TableOfContents";
 import ImageVisualizer from "../components/ImageVisualizer";
+
 
 const MIN_SWIPE_DISTANCE = 50; // Minimum distance in pixels for a swipe
 
@@ -53,8 +55,8 @@ export default function Reader({params}: {params : Promise<{bookId: string}>}) {
   // For top bar
   const [showTopBar, setShowTopBar] = useState<boolean>(false);
 
-  // For Bottom drawer
-  const [showBottomDrawer, setShowBottomDrawer] = useState<boolean>(false);
+  // For Image Viewer drawer
+  const [showImageViewer, setShowImageViewer] = useState<boolean>(false);
 
   // For swipe gestures
   const [touchStart, setTouchStart] = useState<Coordinates>({x: 0, y: 0});
@@ -69,6 +71,9 @@ export default function Reader({params}: {params : Promise<{bookId: string}>}) {
   useEffect(() => {
     markClickedRef.current = markClicked;
   }, [markClicked])
+
+  // Img Url to pass to imageviewer
+  const [imgUrl, setImgUrl] = useState<string | undefined>(undefined);
 
   useEffect(() => {
     (async () => {
@@ -126,7 +131,7 @@ export default function Reader({params}: {params : Promise<{bookId: string}>}) {
       console.log({bookHighlights});
 
       bookHighlights.forEach(h => {
-        rendition?.annotations.highlight(h.location);
+        rendition?.annotations.highlight(h.location, {img_url: h.img_url});
       })
 
       rendition.display();
@@ -140,10 +145,12 @@ export default function Reader({params}: {params : Promise<{bookId: string}>}) {
         setSelection(selection);
       });
 
-      rendition.on("markClicked", (cfiRange: string, data: object, contents: Contents) => {
+      rendition.on("markClicked", (cfiRange: string, data: {img_url: string}, contents: Contents) => {
         setMarkClicked(true);
         console.log("markClicked: ", {cfiRange});
-        setShowBottomDrawer(true);
+        setShowImageViewer(true);
+        setImgUrl(data.img_url);
+
       });
 
       rendition.on("rendered", (_: Section, view: any) => {
@@ -318,20 +325,42 @@ export default function Reader({params}: {params : Promise<{bookId: string}>}) {
                 console.debug({selection});
 
                 if (selection) {
+                  setShowMenu(false);
+                  setSelection(null);
+                  setShowImageViewer(true);
+
                   const supabase = createClient();
 
+                  // Generate image from prompt and get url
+                  const image_id = uuidv4();
+                  const {data: genImage, error: genImageError} = await supabase.functions.invoke<{img_url: string}>('generate-image', {
+                    body: {
+                      image_id,
+                      prompt: selection.text,
+                    },
+                  });
+
+                  if (!genImage || genImageError) {
+                    console.error("function visualizeHighlight: genImageRes Error", genImageError)
+                     return;
+                  }
+
+                  // Get user data - need for id
                   const { data: { user }} = await supabase.auth.getUser();
                   if (!user) {
                     return redirect("/login");
                   }
 
+                  // Insert new visualized highlight
                   const { error: insertError } = await supabase
                     .from("highlights")
                     .insert({
                       user_id: user.id,
                       book_id: bookId,
                       text: selection.text,
-                      location: selection.location
+                      location: selection.location,
+                      img_url: genImage.img_url,
+                      img_prompt: selection.text,
                     })
 
                   if (insertError) {
@@ -339,9 +368,9 @@ export default function Reader({params}: {params : Promise<{bookId: string}>}) {
                     return;
                   }
 
-                  rendition?.annotations.highlight(selection.location);
-                  setShowMenu(false);
-                  setSelection(null);
+                  rendition?.annotations.highlight(selection.location, {img_url: genImage.img_url});
+
+                  setImgUrl(genImage.img_url);
                 }
                 else {
                   console.error("No Selection");
@@ -371,11 +400,13 @@ export default function Reader({params}: {params : Promise<{bookId: string}>}) {
     </div>
 
     <ImageVisualizer
-      isOpen={showBottomDrawer}
+      isOpen={showImageViewer}
       onClose={() => {
-        setShowBottomDrawer(false);
+        setShowImageViewer(false);
         setMarkClicked(false);
+        setImgUrl(undefined);
       }}
+      imgUrl={imgUrl}
     />
 
     <TableOfContents

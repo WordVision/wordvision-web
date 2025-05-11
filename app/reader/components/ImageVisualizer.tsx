@@ -1,13 +1,13 @@
 import {
   Drawer,
   DrawerBackdrop,
-  DrawerBody,
   DrawerContent,
 } from "@/components/ui/drawer";
 import Image from "next/image";
 import { Inter } from "next/font/google";
 import { Button, ButtonIcon } from "@/components/ui/button";
 import { X } from "lucide-react";
+
 const inter = Inter({
   weight: '600',
   subsets: ['latin'],
@@ -39,19 +39,33 @@ export default function ImageVisualizer(p: ImageVisualizerProps) {
             <ButtonIcon as={X}/>
           </Button>
 
-          <div className="relative h-[300px] w-[300px] rounded-xl overflow-clip">
+          <div className="relative h-[325px] w-[325px] rounded-xl overflow-clip">
+          {p.imgUrl ?
+            <Image
+              src={p.imgUrl}
+              alt=""
+              fill={true}
+              objectFit="cover"
+            />
+              :
             <Image
               src="/visualizing_placeholder.png"
               alt=""
               fill={true}
               objectFit="cover"
             />
+          }
           </div>
 
-
-          <p className={inter.className + " p-2 w-full text-center text-xl text-white bg-violet-800 rounded-xl"}>
-            Visualizing...
-          </p>
+          {p.imgUrl ?
+            <p className={inter.className + " p-2 w-full text-center text-xl text-white bg-violet-800 rounded-xl"}>
+              Generated Image
+            </p>
+              :
+            <p className={inter.className + " p-2 w-full text-center text-xl text-white bg-violet-800 rounded-xl"}>
+              Visualizing...
+            </p>
+          }
 
         </div>
       </DrawerContent>
