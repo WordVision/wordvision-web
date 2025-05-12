@@ -164,7 +164,13 @@ export default function Reader({params}: {params : Promise<{bookId: string}>}) {
       console.debug({el});
     }
 
+    // If user clicks on annotation, DO NOT FLIP PAGE
     if (markClickedRef.current) return;
+
+    // If there is a current selection, DO NOT FLIP PAGE
+    if (!e.view?.document.getSelection()?.isCollapsed) {
+      return;
+    }
 
     const readerWidth = e.view?.outerWidth!;
 
