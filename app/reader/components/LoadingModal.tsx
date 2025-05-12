@@ -19,7 +19,7 @@ export default function LoadingModal(p: LoadingModalProps) {
       <ModalContent>
         <div className="min-h-[150px] flex flex-col justify-center gap-2">
           <Spinner size="large"/>
-          <p className="text-center text-lg">{p.text}</p>
+          <p className="text-center text-lg text-black">{p.text}</p>
         </div>
       </ModalContent>
     </Modal>
