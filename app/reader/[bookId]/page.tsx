@@ -91,7 +91,11 @@ export default function Reader({params}: {params : Promise<{bookId: string}>}) {
       setTOC(book.navigation.toc);
 
       // Setup epub rendition
-      const rendition = book.renderTo("reader", { width: "100%", height: "100%" });
+      const rendition = book.renderTo("reader", {
+        width: "100%",
+        height: "100%",
+        allowScriptedContent: true
+      });
 
       // Load book highlights onto epub rendition
       let bookHighlights;
