@@ -24,7 +24,7 @@ import type {
 } from "../types";
 import LoadingModal from "../components/LoadingModal";
 
-const MIN_SWIPE_DISTANCE = 50; // Minimum distance in pixels for a swipe
+const MIN_SWIPE_DISTANCE = 10; // Minimum distance in pixels for a swipe
 
 export default function Reader({params}: {params : Promise<{bookId: string}>}) {
 
@@ -93,6 +93,8 @@ export default function Reader({params}: {params : Promise<{bookId: string}>}) {
 
       // Setup epub rendition
       const rendition = book.renderTo("reader", {
+        manager: "continuous",
+        flow: "scrolled",
         width: "100%",
         height: "100%",
         allowScriptedContent: true
