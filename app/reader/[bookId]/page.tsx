@@ -140,10 +140,20 @@ export default function Reader({params}: {params : Promise<{bookId: string}>}) {
         const viewDoc: Document = view.document;
         // Set event handlers for the document
         viewDoc.oncontextmenu = e => e.preventDefault();
-        viewDoc.onmouseup = showMenuForSelection;
-        viewDoc.ontouchcancel = showMenuForSelection;
+        // viewDoc.onmouseup = showMenuForSelection;
+        // viewDoc.ontouchcancel = showMenuForSelection;
         viewDoc.ontouchstart = recordTouchStartCoordinates;
         viewDoc.ontouchend = performCustomTouchGesture;
+        viewDoc.onselectionchange = e => {
+          console.log("selection change,", e);
+          const doc: Document = e.target as Document;
+          if (!doc.getSelection()?.isCollapsed) {
+            setShowActionBar(true);
+          }
+          else {
+            setShowActionBar(false);
+          }
+        }
       })
 
       // Display rendition
@@ -168,7 +178,6 @@ export default function Reader({params}: {params : Promise<{bookId: string}>}) {
 
     // If there is a current selection, DO NOT PERFROM CUSTOM TOUCH ACTION
     if (!e.view?.document.getSelection()?.isCollapsed) {
-      setShowActionBar(true);
       return;
     };
 
@@ -198,13 +207,13 @@ export default function Reader({params}: {params : Promise<{bookId: string}>}) {
 
 
   // OnMouseUp and OnTouchCancel Event Handler
-  function showMenuForSelection(e: MouseEvent | TouchEvent) {
-    e.preventDefault();
-    console.debug("finish selection event: ", e);
-    if (!e.view?.document.getSelection()?.isCollapsed) {
-      setShowActionBar(true);
-    }
-  }
+  // function showMenuForSelection(e: MouseEvent | TouchEvent) {
+  //   e.preventDefault();
+  //   console.debug("finish selection event: ", e);
+  //   if (!e.view?.document.getSelection()?.isCollapsed) {
+  //     setShowActionBar(true);
+  //   }
+  // }
 
 
   // OnTouchStart Event Handler
