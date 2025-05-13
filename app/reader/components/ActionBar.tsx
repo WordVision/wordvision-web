@@ -5,13 +5,13 @@ const inter = Inter({
   subsets: ['latin'],
 })
 
-interface ContextMenuProps {
+interface ActionBarProps {
   show: boolean;
   dismissHandler: () => void;
   visualizeHandler: () => void;
 }
 
-export default function ContextMenu(p: ContextMenuProps) {
+export default function ActionBar(p: ActionBarProps) {
 
   return <>
     {p.show &&

@@ -12,7 +12,7 @@ import { Spinner } from "@/components/ui/spinner";
 import { Button, ButtonIcon } from "@/components/ui/button";
 
 import TopBar from "../components/TopBar";
-import ContextMenu from "../components/ContextMenu";
+import ActionBar from "../components/ActionBar";
 import TableOfContents from "../components/TableOfContents";
 import ImageVisualizer from "../components/ImageVisualizer";
 
@@ -37,7 +37,7 @@ export default function Reader({params}: {params : Promise<{bookId: string}>}) {
   const [bookTitle, setBookTitle] = useState<string>("Untitled");
 
   // Action Bar
-  const [showMenu, setShowMenu] = useState<boolean>(false);
+  const [showActionBar, setShowActionBar] = useState<boolean>(false);
 
   // Table of Contents
   const [toc, setTOC] = useState<NavItem[]>([]);
@@ -199,7 +199,7 @@ export default function Reader({params}: {params : Promise<{bookId: string}>}) {
     e.preventDefault();
     console.debug("finish selection event: ", e);
     if (!e.view?.document.getSelection()?.isCollapsed) {
-      setShowMenu(true);
+      setShowActionBar(true);
     }
   }
 
@@ -389,9 +389,8 @@ export default function Reader({params}: {params : Promise<{bookId: string}>}) {
   }
 
 
-  return (<>
+  return (
     <div className="h-screen relative flex flex-col justify-center items-center bg-red-200">
-
       <TopBar
         show={showTopBar}
         tocHandler={() => setShowTOC(true)}
@@ -434,18 +433,18 @@ export default function Reader({params}: {params : Promise<{bookId: string}>}) {
         }
       </div>
 
-      <ContextMenu
-        show={showMenu}
+      <ActionBar
+        show={showActionBar}
         dismissHandler={() => {
           removeSelection();
-          setShowMenu(false);
+          setShowActionBar(false);
           setSelection(null);
         }}
         visualizeHandler={async () => {
           console.debug({selection});
           removeSelection();
           if (selection) {
-            setShowMenu(false);
+            setShowActionBar(false);
             setSelection(null);
             setShowImageViewer(true);
             await visualize(selection);
@@ -493,8 +492,6 @@ export default function Reader({params}: {params : Promise<{bookId: string}>}) {
         onClose={() => setLoading(false)}
         text={loadingMessage}
       />
-
     </div>
-
-  </>);
+  );
 }
