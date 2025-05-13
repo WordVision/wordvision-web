@@ -1,9 +1,12 @@
-import { Button, ButtonIcon, ButtonText } from "@/components/ui/button";
-import { Eye } from "lucide-react";
+import { Inter } from "next/font/google";
+
+const inter = Inter({
+  weight: '600',
+  subsets: ['latin'],
+})
 
 interface ContextMenuProps {
-  top: number;
-  left: number;
+  show: boolean;
   dismissHandler: () => void;
   visualizeHandler: () => void;
 }
@@ -11,26 +14,22 @@ interface ContextMenuProps {
 export default function ContextMenu(p: ContextMenuProps) {
 
   return <>
+    {p.show &&
+      <div
+        className="fixed inset-0 z-50 bg-transparent"
+        onClick={p.dismissHandler}
+      ></div>
+    }
+
     <div
-      className="fixed inset-0 z-50 bg-transparent"
-      onClick={p.dismissHandler}
-    ></div>
-    <div
-      className="h-[50px] z-50 bg-gray-800 absolute flex px-2 items-center gap-2 rounded-md"
-      style={{
-        top: p.top < 50 ? p.top + 20 : p.top - 50,
-        left: p.left
-      }}
+      className={`fixed bottom-0 left-0 right-0 z-50 flex p-4 items-center transition ${p.show ? "" : "translate-y-full"}`}
     >
-      <Button
-        size="xs"
-        variant="outline"
-        className="text-white"
-        onPress={p.visualizeHandler}
+      <button
+        className={inter.className + " w-full px-4 py-2 bg-violet-800 rounded-full  text-white"}
+        onClick={p.visualizeHandler}
       >
-        <ButtonIcon as={Eye}/>
-        <ButtonText className="text-white">Visualize</ButtonText>
-      </Button>
+        Visualize it
+      </button>
     </div>
   </>;
 }

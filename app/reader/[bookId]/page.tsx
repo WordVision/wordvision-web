@@ -19,7 +19,6 @@ import ImageVisualizer from "../components/ImageVisualizer";
 import type {
   BookSelection,
   Visualization,
-  Position,
   Coordinates
 } from "../types";
 import LoadingModal from "../components/LoadingModal";
@@ -38,9 +37,8 @@ export default function Reader({params}: {params : Promise<{bookId: string}>}) {
   const [visualization, setVisualization] = useState<Visualization | undefined>(undefined);
   const [bookTitle, setBookTitle] = useState<string>("Untitled");
 
-  // Context Menu
-  const [menuPos, setMenuPos] = useState<Position>({top: 0, left: 0});
-  const [showMenu, setShowMenu] = useState<boolean>(false);
+  // Action Bar
+  const [showMenu, setShowMenu] = useState<boolean>(true);
 
   // Table of Contents
   const [toc, setTOC] = useState<NavItem[]>([]);
@@ -145,9 +143,8 @@ export default function Reader({params}: {params : Promise<{bookId: string}>}) {
         viewDoc.oncontextmenu = e => e.preventDefault();
         viewDoc.onmouseup = showMenuForSelection;
         viewDoc.ontouchcancel = showMenuForSelection;
-        viewDoc.onselectionchange = calculateMenuPosition;
         viewDoc.ontouchstart = recordTouchStartCoordinates;
-        viewDoc.ontouchend = (e) => { flipPage(e, rendition) };
+        viewDoc.ontouchend = performCustomTouchGesture;
       })
 
       // Display rendition
@@ -157,28 +154,23 @@ export default function Reader({params}: {params : Promise<{bookId: string}>}) {
   }, [bookId]);
 
 
-  // OnTouchEnd Event Handler
-  function flipPage(e: TouchEvent, rendition: Rendition) {
-    console.debug("ontouchend flip page", e)
 
+  // OnTouchEnd Event Handler
+  function performCustomTouchGesture(e: TouchEvent) {
     e.preventDefault();
 
+    console.debug("ontouchend flip page", e)
     for (const el of e.composedPath()) {
       console.debug({el});
     }
 
-    // If user clicks on annotation, DO NOT FLIP PAGE
+    // If user clicks on annotation, DO NOT PERFROM CUSTOM TOUCH ACTION
     if (markClickedRef.current) return;
 
-    // If there is a current selection, DO NOT FLIP PAGE
-    if (!e.view?.document.getSelection()?.isCollapsed) {
-      return;
-    }
+    // If there is a current selection, DO NOT PERFROM CUSTOM TOUCH ACTION
+    if (!e.view?.document.getSelection()?.isCollapsed) return;
 
     const readerWidth = e.view?.outerWidth!;
-
-    const startX = touchStartRef.current.x;
-    const startY = touchStartRef.current.y;
 
     // Make sure endX is within the bounds of readerWidth
     let endX = e.changedTouches[0].clientX;
@@ -186,70 +178,19 @@ export default function Reader({params}: {params : Promise<{bookId: string}>}) {
       endX -= readerWidth;
     }
     const endY = e.changedTouches[0].clientY;
+    const startX = touchStartRef.current.x;
+    const startY = touchStartRef.current.y;
+
     const deltaX = endX - startX;
     const deltaY = endY - startY;
     const absDeltaX = Math.abs(deltaX);
     const absDeltaY = Math.abs(deltaY);
 
-    // If user just tapped the screen
+    // If user taps the screen
     if (absDeltaX < MIN_SWIPE_DISTANCE && absDeltaY < MIN_SWIPE_DISTANCE) {
-      const readerWidth = e.view?.outerWidth!;
-
-      if ((startX / readerWidth) > 0.75) {
-        console.debug("tapped the right-hand side", {startX, readerWidth});
-        rendition.next();
-      }
-      else if ((startX / readerWidth) < 0.25) {
-        console.debug("tapped the left-hand side", {startX, readerWidth});
-        rendition.prev();
-      }
-      else {
-        console.debug("tapped the center");
-        setShowTopBar(true);
-      }
-    }
-    // Else, if user horizontally swipes the screen.
-    else if (absDeltaX > MIN_SWIPE_DISTANCE && absDeltaX > absDeltaY) {
-      if (deltaX < 0) {
-        console.debug('Swiped Left');
-        rendition.next();
-      }
-      else {
-        console.debug('Swiped Right');
-        rendition.prev();
-      }
-    }
-    // Else, user swiped vertically
-    else {
-       console.debug('Status: Not a clear horizontal swipe.');
-    }
-  }
-
-
-  // OnSelectionChange Event Handler
-  function calculateMenuPosition(e: any) {
-    e.preventDefault();
-
-    console.debug("selectionchange: ", e);
-    console.debug("selectionchange target: ", e.target.activeElement.clientWidth);
-    console.debug("selectionchange selection: ", e.target.getSelection());
-
-    const selection: Selection = e.target.getSelection();
-
-    if (!selection.isCollapsed) {
-      const range = selection?.getRangeAt(0);
-      const clientRects = range?.getClientRects();
-      const rect = clientRects![0];
-
-      const clientWidth = e.target.activeElement.clientWidth;
-      const top = rect.top < 50 ? rect.top + rect.height : rect.top;
-      let left = rect.left;
-
-      while(left > clientWidth) {
-        left -= clientWidth;
-      }
-
-      setMenuPos({top, left});
+      console.debug("tapped the center");
+      // Show top bar
+      setShowTopBar(true);
     }
   }
 
@@ -459,35 +400,8 @@ export default function Reader({params}: {params : Promise<{bookId: string}>}) {
           </Button>
         }
 
-        <div id="reader" className="relative bg-white h-full w-full lg:w-1/2">
+        <div id="reader" className="bg-white h-full w-full lg:w-1/2">
           {!bookLoaded && <Spinner className="self-center"/>}
-
-          {showMenu &&
-            <ContextMenu
-              top={menuPos!.top}
-              left={menuPos!.left}
-              dismissHandler={() => {
-                setShowMenu(false);
-                setSelection(null);
-                // @ts-ignore: DO NOT REMOVE THIS COMMENT
-                rendition.getContents()[0]?.window?.getSelection()?.removeAllRanges();
-              }}
-              visualizeHandler={async () => {
-                console.debug({selection});
-                if (selection) {
-                  setShowMenu(false);
-                  setSelection(null);
-                  setShowImageViewer(true);
-                  await visualize(selection);
-                }
-                else {
-                  console.error("No Selection");
-                }
-                // @ts-ignore: DO NOT REMOVE THIS COMMENT
-                rendition.getContents()[0]?.window?.getSelection()?.removeAllRanges();
-              }}
-            />
-          }
         </div>
 
         {bookLoaded &&
@@ -505,6 +419,30 @@ export default function Reader({params}: {params : Promise<{bookId: string}>}) {
       </div>
 
     </div>
+
+    <ContextMenu
+      show={showMenu}
+      dismissHandler={() => {
+        // @ts-ignore: DO NOT REMOVE THIS COMMENT
+        rendition.getContents()[0]?.window?.getSelection()?.removeAllRanges();
+        setShowMenu(false);
+        setSelection(null);
+      }}
+      visualizeHandler={async () => {
+        console.debug({selection});
+        // @ts-ignore: DO NOT REMOVE THIS COMMENT
+        rendition.getContents()[0]?.window?.getSelection()?.removeAllRanges();
+        if (selection) {
+          setShowMenu(false);
+          setSelection(null);
+          setShowImageViewer(true);
+          await visualize(selection);
+        }
+        else {
+          console.error("No Selection");
+        }
+      }}
+    />
 
     <TableOfContents
       isOpen={showTOC}
