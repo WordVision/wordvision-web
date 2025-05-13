@@ -36,6 +36,7 @@ export default function Reader({params}: {params : Promise<{bookId: string}>}) {
   const [bookLoaded, setBookLoaded] = useState<boolean>(false);
   const [selection, setSelection] = useState<BookSelection | null>(null);
   const [visualization, setVisualization] = useState<Visualization | undefined>(undefined);
+  const [bookTitle, setBookTitle] = useState<string>("Untitled");
 
   // Context Menu
   const [menuPos, setMenuPos] = useState<Position>({top: 0, left: 0});
@@ -282,7 +283,7 @@ export default function Reader({params}: {params : Promise<{bookId: string}>}) {
     // Get book by id
     const { data: userBook, error: userBooksError } = await supabase
       .from("books")
-      .select()
+      .select("title, filename")
       .eq("id", bookId)
       .single();
 
@@ -290,6 +291,9 @@ export default function Reader({params}: {params : Promise<{bookId: string}>}) {
       console.error(`Could not fetch book with id: ${bookId}`, userBooksError)
       throw userBooksError;
     }
+
+    // Set book title. This information will be used as context when visualizing
+    setBookTitle(userBook.title)
 
     // Create signed url for book
     const { data: urlData, error: urlError } = await supabase
@@ -335,12 +339,20 @@ export default function Reader({params}: {params : Promise<{bookId: string}>}) {
 
     // Generate image from prompt and get url
     const image_id = uuidv4();
-    const {data: genImage, error: genImageError} = await supabase.functions.invoke<{img_url: string}>('generate-image', {
-      body: {
-        image_id,
-        prompt: s.text,
-      },
-    });
+    console.debug("Visualization Data: ", {
+      image_id,
+      passage: s.text,
+      book_title: bookTitle
+    })
+    const {data: genImage, error: genImageError} = await supabase
+      .functions
+      .invoke<{img_url: string}>('generate-image', {
+        body: {
+          image_id,
+          passage: s.text,
+          book_title: bookTitle
+        },
+      });
 
     if (!genImage || genImageError) {
       console.error("function visualizeHighlight: genImageRes Error", genImageError)
