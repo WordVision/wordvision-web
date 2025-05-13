@@ -3,7 +3,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { signup } from "./actions";
 
-export default function SignupPage() {
+export default async function SignupPage() {
   return (
     <div className="flex w-full h-screen bg-black">
       {/* Left Side - Decorative Section */}

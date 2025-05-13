@@ -1,8 +1,9 @@
-//app/private/page.tsx
+// app/library/page.tsx
 import { redirect } from "next/navigation";
 import { createClient } from "@/utils/supabase/server";
+import UserLibrary from "@/components/UserLibrary";
 
-export default async function PrivatePage() {
+export default async function Library() {
   const supabase = await createClient();
 
   const {
@@ -13,9 +14,5 @@ export default async function PrivatePage() {
     return redirect("/login");
   }
 
-  return (
-    <div>
-      <h1>Test</h1>
-    </div>
-  );
+  return <UserLibrary user={user} />;
 }

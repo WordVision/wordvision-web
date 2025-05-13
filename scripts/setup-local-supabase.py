@@ -27,9 +27,9 @@ if not ACCESS_TOKEN:
     print("❌ Missing SUPABASE_ACCESS_TOKEN in .env")
     sys.exit(1)
 
-PROJECT_ID = os.getenv('EXPO_PUBLIC_SUPABASE_PROJECT_ID')
+PROJECT_ID = os.getenv('NEXT_PUBLIC_SUPABASE_PROJECT_ID')
 if not PROJECT_ID:
-    print("❌ Missing EXPO_PUBLIC_SUPABASE_PROJECT_ID in .env")
+    print("❌ Missing NEXT_PUBLIC_SUPABASE_PROJECT_ID in .env")
     sys.exit(1)
 
 def run(cmd, env=None):
