@@ -28,7 +28,6 @@ const MIN_SWIPE_DISTANCE = 10; // Minimum distance in pixels for a swipe
 export default function Reader({params}: {params : Promise<{bookId: string}>}) {
 
   const { bookId } = use(params);
-  console.log({bookId});
 
   // Book/epub related
   const [rendition, setRendition] = useState<Rendition | null>(null);
@@ -298,7 +297,7 @@ export default function Reader({params}: {params : Promise<{bookId: string}>}) {
       });
 
     if (!genImage || genImageError) {
-      console.error("function visualizeHighlight: genImageRes Error", genImageError)
+      console.error("function visualize: genImageError", genImageError)
        return;
     }
     // Get user data - need for id
