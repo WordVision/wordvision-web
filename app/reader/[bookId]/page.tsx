@@ -167,7 +167,10 @@ export default function Reader({params}: {params : Promise<{bookId: string}>}) {
     if (markClickedRef.current) return;
 
     // If there is a current selection, DO NOT PERFROM CUSTOM TOUCH ACTION
-    if (!e.view?.document.getSelection()?.isCollapsed) return;
+    if (!e.view?.document.getSelection()?.isCollapsed) {
+      setShowActionBar(true);
+      return;
+    };
 
     const readerWidth = e.view?.outerWidth!;
 
