@@ -37,7 +37,7 @@ export default function Reader({params}: {params : Promise<{bookId: string}>}) {
   const [bookTitle, setBookTitle] = useState<string>("Untitled");
 
   // Action Bar
-  const [showMenu, setShowMenu] = useState<boolean>(true);
+  const [showMenu, setShowMenu] = useState<boolean>(false);
 
   // Table of Contents
   const [toc, setTOC] = useState<NavItem[]>([]);
@@ -399,6 +399,8 @@ export default function Reader({params}: {params : Promise<{bookId: string}>}) {
       />
 
       <div className="w-full h-full flex justify-center items-center">
+
+        {/* Previous page button (only on desktop) */}
         {bookLoaded &&
           <Button
             className="hidden lg:block"
@@ -412,10 +414,12 @@ export default function Reader({params}: {params : Promise<{bookId: string}>}) {
           </Button>
         }
 
+        {/* epub reader container */}
         <div id="reader" className="bg-white h-full w-full lg:w-1/2">
           {!bookLoaded && <Spinner className="self-center"/>}
         </div>
 
+        {/* Next page button (only on desktop) */}
         {bookLoaded &&
           <Button
             className="hidden lg:block"
@@ -430,67 +434,67 @@ export default function Reader({params}: {params : Promise<{bookId: string}>}) {
         }
       </div>
 
-    </div>
-
-    <ContextMenu
-      show={showMenu}
-      dismissHandler={() => {
-        removeSelection();
-        setShowMenu(false);
-        setSelection(null);
-      }}
-      visualizeHandler={async () => {
-        console.debug({selection});
-        removeSelection();
-        if (selection) {
+      <ContextMenu
+        show={showMenu}
+        dismissHandler={() => {
+          removeSelection();
           setShowMenu(false);
           setSelection(null);
-          setShowImageViewer(true);
-          await visualize(selection);
-        }
-        else {
-          console.error("No Selection");
-        }
-      }}
-    />
+        }}
+        visualizeHandler={async () => {
+          console.debug({selection});
+          removeSelection();
+          if (selection) {
+            setShowMenu(false);
+            setSelection(null);
+            setShowImageViewer(true);
+            await visualize(selection);
+          }
+          else {
+            console.error("No Selection");
+          }
+        }}
+      />
 
-    <TableOfContents
-      isOpen={showTOC}
-      onClose={() => {
-        setShowTOC(false)
-      }}
-      toc={toc}
-      onItemPress={(item) => {
-        rendition?.display(item.href)
-        setShowTOC(false);
-        setShowTopBar(false);
-      }}
-    />
+      <TableOfContents
+        isOpen={showTOC}
+        onClose={() => {
+          setShowTOC(false)
+        }}
+        toc={toc}
+        onItemPress={(item) => {
+          rendition?.display(item.href)
+          setShowTOC(false);
+          setShowTopBar(false);
+        }}
+      />
 
-    <ImageVisualizer
-      isOpen={showImageViewer}
-      visualization={visualization}
-      onClose={closeImageVisualizer}
-      onDelete={async (v: Visualization) => {
-        try {
-          setLoadingMessage("Deleting Visualization...")
-          setLoading(true);
-          await deleteVisualization(v);
-          closeImageVisualizer();
-          setLoading(false);
-          setLoadingMessage("")
-        }
-        catch(error) {
-          console.error("Delete Visualization Error: ", error);
-        }
-      }}
-    />
+      <ImageVisualizer
+        isOpen={showImageViewer}
+        visualization={visualization}
+        onClose={closeImageVisualizer}
+        onDelete={async (v: Visualization) => {
+          try {
+            setLoadingMessage("Deleting Visualization...")
+            setLoading(true);
+            await deleteVisualization(v);
+            closeImageVisualizer();
+            setLoading(false);
+            setLoadingMessage("")
+          }
+          catch(error) {
+            console.error("Delete Visualization Error: ", error);
+          }
+        }}
+      />
 
-    <LoadingModal
-      isOpen={loading}
-      onClose={() => setLoading(false)}
-      text={loadingMessage}
-    />
+      <LoadingModal
+        isOpen={loading}
+        onClose={() => setLoading(false)}
+        text={loadingMessage}
+      />
+
+    </div>
 
   </>);
 }
