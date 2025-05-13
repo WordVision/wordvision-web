@@ -1,7 +1,7 @@
 "use client"
 
 import { use, useEffect, useRef, useState } from "react";
-import ePub, { NavItem, Rendition } from "epubjs";
+import ePub, { Contents, NavItem, Rendition } from "epubjs";
 import Section from "epubjs/types/section";
 import { redirect } from "next/navigation";
 import { ChevronLeft, ChevronRight } from "lucide-react";
@@ -376,6 +376,19 @@ export default function Reader({params}: {params : Promise<{bookId: string}>}) {
   }
 
 
+  function removeSelection() {
+    if (rendition) {
+      // @ts-ignore: DO NOT REMOVE THIS COMMENT
+      rendition.getContents().forEach((c: Contents) => {
+        c.window.getSelection()?.removeAllRanges();
+      });
+    }
+    else {
+      console.error("Cannont remove selection from page. Rendition is null");
+    }
+  }
+
+
   return (<>
     <div className="h-screen relative flex flex-col justify-center items-center bg-red-200">
 
@@ -422,15 +435,13 @@ export default function Reader({params}: {params : Promise<{bookId: string}>}) {
     <ContextMenu
       show={showMenu}
       dismissHandler={() => {
-        // @ts-ignore: DO NOT REMOVE THIS COMMENT
-        rendition.getContents()[0]?.window?.getSelection()?.removeAllRanges();
+        removeSelection();
         setShowMenu(false);
         setSelection(null);
       }}
       visualizeHandler={async () => {
         console.debug({selection});
-        // @ts-ignore: DO NOT REMOVE THIS COMMENT
-        rendition.getContents()[0]?.window?.getSelection()?.removeAllRanges();
+        removeSelection();
         if (selection) {
           setShowMenu(false);
           setSelection(null);
