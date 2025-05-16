@@ -45,6 +45,7 @@
     "@gluestack/ui-next-adapter": "^2.1.12",
     "@huggingface/inference": "^3.9.2",
     "@legendapp/motion": "^2.4.0",
+    "@lottiefiles/dotlottie-react": "^0.13.5",
     "@react-native/assets-registry": "^0.79.1",
     "@supabase/ssr": "^0.6.1",
     "@supabase/supabase-js": "^2.49.4",

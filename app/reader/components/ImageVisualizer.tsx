@@ -9,6 +9,8 @@ import { Button, ButtonIcon, ButtonText } from "@/components/ui/button";
 import { X } from "lucide-react";
 import { Visualization } from "../types";
 
+import {DotLottieReact} from "@lottiefiles/dotlottie-react"
+
 const inter = Inter({
   weight: '600',
   subsets: ['latin'],
@@ -22,6 +24,7 @@ interface ImageVisualizerProps {
 }
 
 export default function ImageVisualizer(p: ImageVisualizerProps) {
+
   return (
     <Drawer
       isOpen={p.isOpen}
@@ -50,11 +53,10 @@ export default function ImageVisualizer(p: ImageVisualizerProps) {
               objectFit="cover"
             />
               :
-            <Image
-              src="/visualizing_placeholder.png"
-              alt=""
-              fill={true}
-              objectFit="cover"
+            <DotLottieReact
+              src="/image_loading.lottie"
+              loop
+              autoplay
             />
           }
           </div>
