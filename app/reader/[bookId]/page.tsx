@@ -30,11 +30,15 @@ export default function Reader({params}: {params : Promise<{bookId: string}>}) {
   const { bookId } = use(params);
 
   // Book/epub related
-  const [rendition, setRendition] = useState<Rendition | null>(null);
   const [bookLoaded, setBookLoaded] = useState<boolean>(false);
   const [selection, setSelection] = useState<BookSelection | null>(null);
   const [visualization, setVisualization] = useState<Visualization | undefined>(undefined);
   const [bookTitle, setBookTitle] = useState<string>("Untitled");
+  const [rendition, setRendition] = useState<Rendition | null>(null);
+  const renditionRef = useRef(rendition);
+  useEffect(() => {
+    renditionRef.current = rendition;
+  }, [rendition]);
 
   // Action Bar
   const [showActionBar, setShowActionBar] = useState<boolean>(false);
@@ -139,9 +143,10 @@ export default function Reader({params}: {params : Promise<{bookId: string}>}) {
         console.debug("rendered view:", {view})
         const viewDoc: Document = view.document;
         // Set event handlers for the document
-        viewDoc.oncontextmenu = e => e.preventDefault();
+        // viewDoc.oncontextmenu = e => e.preventDefault();
         // viewDoc.onmouseup = showMenuForSelection;
         // viewDoc.ontouchcancel = showMenuForSelection;
+        // viewDoc.ontouchcancel = e => console.log("ontouchcancel: ", e);
         viewDoc.ontouchstart = recordTouchStartCoordinates;
         viewDoc.ontouchend = performCustomTouchGesture;
         viewDoc.onselectionchange = e => {
@@ -169,9 +174,6 @@ export default function Reader({params}: {params : Promise<{bookId: string}>}) {
     e.preventDefault();
 
     console.debug("ontouchend flip page", e)
-    for (const el of e.composedPath()) {
-      console.debug({el});
-    }
 
     // If user clicks on annotation, DO NOT PERFROM CUSTOM TOUCH ACTION
     if (markClickedRef.current) return;
@@ -199,7 +201,18 @@ export default function Reader({params}: {params : Promise<{bookId: string}>}) {
 
     // If user taps the screen
     if (absDeltaX < MIN_SWIPE_DISTANCE && absDeltaY < MIN_SWIPE_DISTANCE) {
-      console.debug("tapped the center");
+      console.debug("tapped the center", {absDeltaX, absDeltaY});
+
+      for (const el of e.composedPath() as any) {
+        console.debug(el.nodeName);
+        if (el.nodeName === "A") {
+          console.debug("navigating to link", {el}, el.href.split('OEBPS/')[1]);
+          console.debug("rendition, ", rendition);
+          renditionRef.current?.display(el.href.split('OEBPS/')[1]);
+          return;
+        }
+      }
+
       // Show top bar
       setShowTopBar(true);
     }
