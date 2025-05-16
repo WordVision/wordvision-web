@@ -336,16 +336,19 @@ export default function Reader({params}: {params : Promise<{bookId: string}>}) {
       console.error("unable to save highlight error:", insertError?.message);
       return;
     }
-    // Add new annotation the current epub rendition
-    rendition?.annotations.highlight(s.location, {img_url: genImage.img_url});
 
-    setVisualization({
+    const hData: Visualization = {
       id: insertData.id,
       text: insertData.text,
       location: insertData.location,
       img_url: insertData.img_url,
       img_prompt: insertData.img_prompt
-    })
+    }
+
+    // Add new annotation the current epub rendition
+    rendition?.annotations.highlight(s.location, hData);
+
+    setVisualization(hData);
   }
 
 
