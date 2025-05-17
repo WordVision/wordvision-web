@@ -406,7 +406,6 @@ export default function Reader({params}: {params : Promise<{bookId: string}>}) {
 
   function removeSelection() {
     if (rendition) {
-      // @ts-ignore: DO NOT REMOVE THIS COMMENT
       rendition.getContents().forEach((c: Contents) => {
         c.window.getSelection()?.removeAllRanges();
       });
