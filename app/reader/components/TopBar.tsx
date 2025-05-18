@@ -15,7 +15,7 @@ export default function TopBar(p: TopBarProps) {
           <button
             className="active:bg-neutral-200 rounded px-4 py-2"
           >
-            <ArrowLeft size={28} />
+            <ArrowLeft size={28} color="black"/>
           </button>
         </Link>
 
@@ -23,7 +23,7 @@ export default function TopBar(p: TopBarProps) {
           className="active:bg-neutral-200 rounded px-4 py-2"
           onClick={p.tocHandler}
         >
-          <TableOfContents size={28} />
+          <TableOfContents size={28} color="black"/>
         </button>
 
       </div>
