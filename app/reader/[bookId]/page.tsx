@@ -214,16 +214,6 @@ export default function Reader({params}: {params : Promise<{bookId: string}>}) {
   }
 
 
-  // OnMouseUp and OnTouchCancel Event Handler
-  // function showMenuForSelection(e: MouseEvent | TouchEvent) {
-  //   e.preventDefault();
-  //   console.debug("finish selection event: ", e);
-  //   if (!e.view?.document.getSelection()?.isCollapsed) {
-  //     setShowActionBar(true);
-  //   }
-  // }
-
-
   // OnTouchStart Event Handler
   function recordTouchStartCoordinates(e: TouchEvent) {
     // Make sure startX is within the bounds of readerWidth
