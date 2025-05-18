@@ -130,6 +130,11 @@ export default function Reader({params}: {params : Promise<{bookId: string}>}) {
         };
         console.debug({ selection });
         setSelection(selection);
+        setShowActionBar(true);
+      });
+
+      rendition.on("unselected", () => {
+        setShowActionBar(false);
       });
 
       rendition.on("markClicked", (cfiRange: string, data: Visualization) => {
@@ -149,16 +154,6 @@ export default function Reader({params}: {params : Promise<{bookId: string}>}) {
         // viewDoc.ontouchcancel = e => console.log("ontouchcancel: ", e);
         viewDoc.ontouchstart = recordTouchStartCoordinates;
         viewDoc.ontouchend = performCustomTouchGesture;
-        viewDoc.onselectionchange = e => {
-          console.log("selection change,", e);
-          const doc: Document = e.target as Document;
-          if (!doc.getSelection()?.isCollapsed) {
-            setShowActionBar(true);
-          }
-          else {
-            setShowActionBar(false);
-          }
-        }
       })
 
       // Display rendition
