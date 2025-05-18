@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { createClient } from "@/utils/supabase/client";
 import Link from "next/link";
 import Image from "next/image";
@@ -28,7 +28,7 @@ export default function UserLibrary({ user }: Props) {
 
   const uploaderRef = useRef<FileUploaderHandle>(null);
 
-  const fetchUserBooks = async () => {
+  const fetchUserBooks = useCallback(async () => {
     const supabase = createClient();
 
     const { data: userBooks, error: userBooksError } = await supabase
@@ -57,11 +57,11 @@ export default function UserLibrary({ user }: Props) {
 
     setBooks(booksData || []);
     setLoading(false);
-  };
+  }, [user.id]);
 
   useEffect(() => {
     fetchUserBooks();
-  }, [user.id]);
+  }, [fetchUserBooks, user.id]);
 
   if (loading)
     return <div className="text-center py-8">Loading your library...</div>;
@@ -72,21 +72,10 @@ export default function UserLibrary({ user }: Props) {
   return (
     <div className="p-4">
 
-      <button
-        className="text-black bg-blue-600"
-        aria-label="sign out"
-        onClick={async () => {
-          const supabase = createClient();
-          await supabase.auth.signOut();
-          return redirect("/login");
-        }}
-      >
-        Sign out
-      </button>
 
-      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4 justify-center">
+      <div className="flex flex-wrap gap-4">
         {books.map((book) => (
-          <Link key={book.id} href={`/book/${book.id}`}>
+          <Link key={book.id} href={`/reader/${book.id}`}>
             <div className="flex flex-col items-center cursor-pointer">
               {book.cover_url ? (
                 <Image
@@ -127,6 +116,18 @@ export default function UserLibrary({ user }: Props) {
           fetchUserBooks();
         }}
       />
+
+      <button
+        className="py-2 px-4 fixed bottom-6 left-6 bg-blue-600 text-white rounded-full shadow-lg hover:bg-blue-700 text-xl flex items-center justify-center"
+        aria-label="Sign Out"
+        onClick={async () => {
+          const supabase = createClient();
+          await supabase.auth.signOut();
+          return redirect("/login");
+        }}
+      >
+        sign out
+      </button>
 
     </div>
   );

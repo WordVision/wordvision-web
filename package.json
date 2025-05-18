@@ -45,14 +45,20 @@
     "@gluestack/ui-next-adapter": "^2.1.12",
     "@huggingface/inference": "^3.9.2",
     "@legendapp/motion": "^2.4.0",
+    "@lottiefiles/dotlottie-react": "^0.13.5",
     "@react-native/assets-registry": "^0.79.1",
     "@supabase/ssr": "^0.6.1",
     "@supabase/supabase-js": "^2.49.4",
     "@upstash/ratelimit": "^2.0.5",
     "@upstash/redis": "^1.34.8",
     "autoprefixer": "^10.4.20",
+<<<<<<< HEAD
     "epubjs": "^0.3.93",
     "lucide-react": "^0.509.0",
+=======
+    "epubjs": "github:JonPeeAir/epub.js#JonPeeAir",
+    "lucide-react": "^0.487.0",
+>>>>>>> ereader
     "nativewind": "^4.1.23",
     "next": "15.1.4",
     "next-pwa": "^5.6.0",
@@ -63,7 +69,8 @@
     "react-native-safe-area-context": "^5.1.0",
     "react-native-svg": "^15.2.0",
     "react-native-web": "^0.19.13",
-    "uuid": "^11.1.0"
+    "uuid": "^11.1.0",
+    "vaul": "^1.1.2"
   },
   "devDependencies": {
     "@eslint/eslintrc": "^3",

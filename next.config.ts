@@ -3,10 +3,18 @@ import { withGluestackUI } from "@gluestack/ui-next-adapter";
 import withPWA from "next-pwa";
 
 const baseConfig: NextConfig = {
+  images: {
+    remotePatterns: [
+      {
+        protocol: 'https',
+        hostname: 'szlxwnautzzqyrsnlenr.supabase.co',
+      },
+    ],
+  },
   transpilePackages: [
     "nativewind",
     "react-native-css-interop",
-    "@react-native/assets-registry", 
+    "@react-native/assets-registry",
   ],
 };
 
