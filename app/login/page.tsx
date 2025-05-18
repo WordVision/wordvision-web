@@ -22,7 +22,7 @@ export default async function LoginPage() {
 
       <div className="w-full md:w-7/12 flex flex-col items-center justify-center p-6 sm:p-8 md:px-12 lg:px-20">
         {/* WordVision Heading */}
-        <h1 className="text-5xl sm:text-6xl font-bold text-white-800 mb-3">
+        <h1 className="text-5xl sm:text-6xl font-bold text-white mb-3">
           WordVision
         </h1>
 
