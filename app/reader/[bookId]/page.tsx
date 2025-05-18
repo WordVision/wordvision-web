@@ -148,10 +148,6 @@ export default function Reader({params}: {params : Promise<{bookId: string}>}) {
         console.debug("rendered view:", {view})
         const viewDoc: Document = view.document;
         // Set event handlers for the document
-        // viewDoc.oncontextmenu = e => e.preventDefault();
-        // viewDoc.onmouseup = showMenuForSelection;
-        // viewDoc.ontouchcancel = showMenuForSelection;
-        // viewDoc.ontouchcancel = e => console.log("ontouchcancel: ", e);
         viewDoc.ontouchstart = recordTouchStartCoordinates;
         viewDoc.ontouchend = performCustomTouchGesture;
       })
