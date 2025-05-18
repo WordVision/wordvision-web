@@ -56,6 +56,7 @@ export default function Reader({params}: {params : Promise<{bookId: string}>}) {
 
   // For Image Viewer drawer
   const [showImageViewer, setShowImageViewer] = useState<boolean>(false);
+  const [visualizeError, setVisualizeError] = useState<string | undefined>();
 
   // For swipe gestures
   const [touchStart, setTouchStart] = useState<Coordinates>({x: 0, y: 0});
@@ -307,7 +308,15 @@ export default function Reader({params}: {params : Promise<{bookId: string}>}) {
       });
 
     if (!genImage || genImageError) {
-      console.error("function visualize: genImageError", genImageError)
+      console.error("function visualize: genImageError", genImageError.context?.status)
+      if (genImageError.context?.status === 429) {
+        const errData: { status: number; message: string; reset: number } = await genImageError.context.json();
+        const resetDate = new Date(errData.reset);
+        setVisualizeError( `${errData.message}\n\nYour quota resets on ${resetDate.toLocaleString()}`);
+      }
+      else {
+        setVisualizeError('Error visualizing image');
+      }
        return;
     }
     // Get user data - need for id
@@ -386,6 +395,7 @@ export default function Reader({params}: {params : Promise<{bookId: string}>}) {
     setShowImageViewer(false);
     setMarkClicked(false);
     setVisualization(undefined)
+    setVisualizeError(undefined);
   }
 
 
@@ -483,6 +493,7 @@ export default function Reader({params}: {params : Promise<{bookId: string}>}) {
       <ImageVisualizer
         isOpen={showImageViewer}
         visualization={visualization}
+        error={visualizeError}
         onClose={closeImageVisualizer}
         onDelete={async (v: Visualization) => {
           try {
