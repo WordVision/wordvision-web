@@ -1,15 +1,11 @@
-import {
-  Drawer,
-  DrawerBackdrop,
-  DrawerContent,
-} from "@/components/ui/drawer";
 import Image from "next/image";
 import { Inter } from "next/font/google";
-import { Button, ButtonIcon, ButtonText } from "@/components/ui/button";
-import { X } from "lucide-react";
-import { Visualization } from "../types";
+import { Drawer } from "vaul";
+import { DotLottieReact } from "@lottiefiles/dotlottie-react"
 
-import {DotLottieReact} from "@lottiefiles/dotlottie-react"
+import { Button, ButtonText } from "@/components/ui/button";
+
+import { Visualization } from "../types";
 
 const inter = Inter({
   weight: '600',
@@ -20,72 +16,61 @@ interface ImageVisualizerProps {
   isOpen: boolean;
   onClose: () => void;
   onDelete: (v: Visualization) => void;
-  visualization?: Visualization
+  visualization?: Visualization;
 }
 
 export default function ImageVisualizer(p: ImageVisualizerProps) {
-
   return (
-    <Drawer
-      isOpen={p.isOpen}
+    <Drawer.Root
+      open={p.isOpen}
       onClose={p.onClose}
-      size="lg"
-      anchor="bottom"
+      dismissible={p.visualization !== undefined}
     >
-      <DrawerBackdrop />
-      <DrawerContent className="p-4 flex flex-col">
-        <div className="flex flex-col items-center gap-6">
-
-          <Button
-            size="lg"
-            className="w-fit rounded-full p-2.5 bg-violet-800 text-white self-end"
-            onPress={p.onClose}
-          >
-            <ButtonIcon as={X}/>
-          </Button>
-
-          <div className="relative h-[325px] w-[325px] rounded-xl overflow-clip">
-          {p.visualization ?
-            <Image
-              src={p.visualization.img_url}
-              alt=""
-              fill={true}
-              objectFit="cover"
-            />
-              :
-            <DotLottieReact
-              src="/image_loading.lottie"
-              loop
-              autoplay
-            />
-          }
-          </div>
-
-          <div className="w-full flex flex-col justify-center">
-            {p.visualization ?
-              <>
-                <p className={inter.className + " p-2 w-full text-center text-xl text-white bg-slate-800 rounded-xl"}>
-                  Image Generated
+      <Drawer.Portal>
+        <Drawer.Overlay className="fixed inset-0 bg-black/40"/>
+        <Drawer.Content className="px-6 pb-6 pt-4 bg-gray-100 h-fit fixed bottom-0 left-0 right-0 outline-none rounded-t-xl overflow-clip">
+          <div aria-hidden className="mx-auto w-12 h-1.5 flex-shrink-0 rounded-full bg-gray-300 mb-4" />
+          <div className="w-full h-full flex flex-col gap-4">
+            <div className="relative aspect-square w-full rounded-xl overflow-clip">
+              {p.visualization ?
+                <Image
+                  src={p.visualization.img_url}
+                  alt=""
+                  fill={true}
+                  objectFit="cover"
+                />
+                  :
+                <DotLottieReact
+                  src="/image_loading.lottie"
+                  loop
+                  autoplay
+                />
+              }
+            </div>
+            <div className="w-full flex flex-col justify-center">
+              {p.visualization ?
+                <>
+                  <p className={inter.className + " p-2 w-full text-center text-xl text-white bg-slate-800 rounded-xl"}>
+                    Image Generated
+                  </p>
+                  <Button
+                    size="lg"
+                    variant="link"
+                    action="negative"
+                    onPress={() => p.onDelete(p.visualization!)}
+                  >
+                    <ButtonText>Delete Visualization</ButtonText>
+                  </Button>
+                </>
+                  :
+                <p className={inter.className + " p-2 w-full text-center text-xl text-white bg-violet-800 rounded-xl"}>
+                  Visualizing...
                 </p>
-
-                <Button
-                  size="lg"
-                  variant="link"
-                  action="negative"
-                  onPress={() => p.onDelete(p.visualization!)}
-                >
-                  <ButtonText>Delete Visualization</ButtonText>
-                </Button>
-              </>
-                :
-              <p className={inter.className + " p-2 w-full text-center text-xl text-white bg-violet-800 rounded-xl"}>
-                Visualizing...
-              </p>
-            }
-
+              }
+            </div>
           </div>
-        </div>
-      </DrawerContent>
-    </Drawer>
+        </Drawer.Content>
+      </Drawer.Portal>
+    </Drawer.Root>
   )
 }
