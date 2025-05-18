@@ -52,13 +52,8 @@
     "@upstash/ratelimit": "^2.0.5",
     "@upstash/redis": "^1.34.8",
     "autoprefixer": "^10.4.20",
-<<<<<<< HEAD
-    "epubjs": "^0.3.93",
     "lucide-react": "^0.509.0",
-=======
     "epubjs": "github:JonPeeAir/epub.js#JonPeeAir",
-    "lucide-react": "^0.487.0",
->>>>>>> ereader
     "nativewind": "^4.1.23",
     "next": "15.1.4",
     "next-pwa": "^5.6.0",
