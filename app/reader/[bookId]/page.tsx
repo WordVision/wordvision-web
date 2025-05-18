@@ -23,7 +23,7 @@ import type {
 } from "../types";
 import LoadingModal from "../components/LoadingModal";
 
-const MIN_SWIPE_DISTANCE = 10; // Minimum distance in pixels for a swipe
+const MIN_SWIPE_DISTANCE = 1; // Minimum distance in pixels for a swipe
 
 export default function Reader({params}: {params : Promise<{bookId: string}>}) {
 
