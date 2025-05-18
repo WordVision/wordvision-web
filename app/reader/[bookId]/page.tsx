@@ -49,6 +49,10 @@ export default function Reader({params}: {params : Promise<{bookId: string}>}) {
 
   // For top bar
   const [showTopBar, setShowTopBar] = useState<boolean>(false);
+  const showTopBarRef = useRef(showTopBar);
+  useEffect(() => {
+    showTopBarRef.current = showTopBar;
+  }, [showTopBar]);
 
   // For Image Viewer drawer
   const [showImageViewer, setShowImageViewer] = useState<boolean>(false);
@@ -130,6 +134,7 @@ export default function Reader({params}: {params : Promise<{bookId: string}>}) {
         };
         console.debug({ selection });
         setSelection(selection);
+        setShowTopBar(false);
         setShowActionBar(true);
       });
 
@@ -143,6 +148,7 @@ export default function Reader({params}: {params : Promise<{bookId: string}>}) {
         setShowImageViewer(true);
         setVisualization(data)
       });
+
 
       rendition.on("rendered", (_: Section, view: any) => {
         console.debug("rendered view:", {view})
@@ -199,8 +205,11 @@ export default function Reader({params}: {params : Promise<{bookId: string}>}) {
     if (absDeltaX < MIN_SWIPE_DISTANCE && absDeltaY < MIN_SWIPE_DISTANCE) {
       e.preventDefault();
       console.debug("tapped the center", {absDeltaX, absDeltaY});
-      // Show top bar
-      setShowTopBar(true);
+      // Toggle top bar
+      setShowTopBar(!showTopBarRef.current);
+    }
+    else {
+      setShowTopBar(false);
     }
   }
 

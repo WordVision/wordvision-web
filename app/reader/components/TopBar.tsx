@@ -11,12 +11,6 @@ interface TopBarProps {
 export default function TopBar(p: TopBarProps) {
 
   return (<>
-      {p.show &&
-        <div
-          className="fixed inset-0 z-50 bg-transparent"
-          onClick={p.dismissHandler}
-        ></div>
-      }
       <div className={"fixed inset-x-0 top-0 z-[60] px-4 py-2 bg-violet-800/95 flex justify-between transition" + (p.show ? "" : " -translate-y-full")} >
 
         <Link href={"/"}>
