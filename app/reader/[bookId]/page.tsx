@@ -162,7 +162,6 @@ export default function Reader({params}: {params : Promise<{bookId: string}>}) {
 
   // OnTouchEnd Event Handler
   function performCustomTouchGesture(e: TouchEvent) {
-    e.preventDefault();
 
     console.debug("ontouchend flip page", e)
 
@@ -170,9 +169,15 @@ export default function Reader({params}: {params : Promise<{bookId: string}>}) {
     if (markClickedRef.current) return;
 
     // If there is a current selection, DO NOT PERFROM CUSTOM TOUCH ACTION
-    if (!e.view?.document.getSelection()?.isCollapsed) {
-      return;
-    };
+    if (!e.view?.document.getSelection()?.isCollapsed) return;
+
+    // If user click on an internal link, DO NOT PERFROM CUSTOM TOUCH ACTION
+    for (const el of e.composedPath() as any) {
+      console.debug(el.nodeName);
+      if (el.nodeName === "A") {
+        return;
+      }
+    }
 
     const readerWidth = e.view?.outerWidth!;
 
@@ -192,18 +197,8 @@ export default function Reader({params}: {params : Promise<{bookId: string}>}) {
 
     // If user taps the screen
     if (absDeltaX < MIN_SWIPE_DISTANCE && absDeltaY < MIN_SWIPE_DISTANCE) {
+      e.preventDefault();
       console.debug("tapped the center", {absDeltaX, absDeltaY});
-
-      for (const el of e.composedPath() as any) {
-        console.debug(el.nodeName);
-        if (el.nodeName === "A") {
-          console.debug("navigating to link", {el}, el.href.split('OEBPS/')[1]);
-          console.debug("rendition, ", rendition);
-          renditionRef.current?.display(el.href.split('OEBPS/')[1]);
-          return;
-        }
-      }
-
       // Show top bar
       setShowTopBar(true);
     }
