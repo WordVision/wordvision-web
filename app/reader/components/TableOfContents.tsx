@@ -30,13 +30,13 @@ export default function TableOfContents(p: TableOfContentsProps) {
       <DrawerContent>
 
         <DrawerHeader>
-          <Heading size="3xl">Table of Contents</Heading>
+          <Heading size="2xl">Table of Contents</Heading>
         </DrawerHeader>
 
         <DrawerBody>
           {p.toc.map((item, i) => (
             <Link key={i} onPress={() => p.onItemPress(item)}>
-              <LinkText>{item.label}</LinkText>
+              <LinkText>{item.label.trim()}</LinkText>
             </Link>
           ))}
         </DrawerBody>

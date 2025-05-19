@@ -1,4 +1,3 @@
-import { Button, ButtonIcon } from "@/components/ui/button";
 import { ArrowLeft, TableOfContents } from "lucide-react";
 import Link from "next/link";
 
@@ -9,38 +8,24 @@ interface TopBarProps {
 }
 
 export default function TopBar(p: TopBarProps) {
-
   return (<>
-      {p.show &&
-        <div
-          className="fixed inset-0 z-50 bg-transparent"
-          onClick={p.dismissHandler}
-        ></div>
-      }
-      <div className={"fixed inset-x-0 top-0 z-[60] px-4 py-2 bg-violet-800/95 flex justify-between transition" + (p.show ? "" : " -translate-y-full")} >
+      <div className={"fixed inset-x-0 top-0 z-[60] px-2 py-2 bg-neutral-50 shadow-lg flex justify-between transition" + (p.show ? "" : " -translate-y-full")} >
 
-        <Link href={"/"}>
-          <Button
-            size="sm"
-            variant="outline"
-            action="primary"
-            className="text-white outline-white"
+        <Link className="flex items-center" href={"/"}>
+          <button
+            className="active:bg-neutral-200 rounded px-4 py-2"
           >
-            <ButtonIcon as={ArrowLeft} />
-          </Button>
+            <ArrowLeft size={28} color="black"/>
+          </button>
         </Link>
 
-        <Button
-          size="sm"
-          variant="outline"
-          action="primary"
-          className="text-white outline-white"
-          onPress={p.tocHandler}
+        <button
+          className="active:bg-neutral-200 rounded px-4 py-2"
+          onClick={p.tocHandler}
         >
-          <ButtonIcon as={TableOfContents} />
-        </Button>
+          <TableOfContents size={28} color="black"/>
+        </button>
+
       </div>
   </>)
-
-
 }

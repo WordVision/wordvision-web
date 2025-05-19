@@ -23,18 +23,22 @@ import type {
 } from "../types";
 import LoadingModal from "../components/LoadingModal";
 
-const MIN_SWIPE_DISTANCE = 10; // Minimum distance in pixels for a swipe
+const MIN_SWIPE_DISTANCE = 1; // Minimum distance in pixels for a swipe
 
 export default function Reader({params}: {params : Promise<{bookId: string}>}) {
 
   const { bookId } = use(params);
 
   // Book/epub related
-  const [rendition, setRendition] = useState<Rendition | null>(null);
   const [bookLoaded, setBookLoaded] = useState<boolean>(false);
   const [selection, setSelection] = useState<BookSelection | null>(null);
   const [visualization, setVisualization] = useState<Visualization | undefined>(undefined);
   const [bookTitle, setBookTitle] = useState<string>("Untitled");
+  const [rendition, setRendition] = useState<Rendition | null>(null);
+  const renditionRef = useRef(rendition);
+  useEffect(() => {
+    renditionRef.current = rendition;
+  }, [rendition]);
 
   // Action Bar
   const [showActionBar, setShowActionBar] = useState<boolean>(false);
@@ -45,9 +49,14 @@ export default function Reader({params}: {params : Promise<{bookId: string}>}) {
 
   // For top bar
   const [showTopBar, setShowTopBar] = useState<boolean>(false);
+  const showTopBarRef = useRef(showTopBar);
+  useEffect(() => {
+    showTopBarRef.current = showTopBar;
+  }, [showTopBar]);
 
   // For Image Viewer drawer
   const [showImageViewer, setShowImageViewer] = useState<boolean>(false);
+  const [visualizeError, setVisualizeError] = useState<string | undefined>();
 
   // For swipe gestures
   const [touchStart, setTouchStart] = useState<Coordinates>({x: 0, y: 0});
@@ -126,6 +135,12 @@ export default function Reader({params}: {params : Promise<{bookId: string}>}) {
         };
         console.debug({ selection });
         setSelection(selection);
+        setShowTopBar(false);
+        setShowActionBar(true);
+      });
+
+      rendition.on("unselected", () => {
+        setShowActionBar(false);
       });
 
       rendition.on("markClicked", (cfiRange: string, data: Visualization) => {
@@ -135,13 +150,11 @@ export default function Reader({params}: {params : Promise<{bookId: string}>}) {
         setVisualization(data)
       });
 
+
       rendition.on("rendered", (_: Section, view: any) => {
         console.debug("rendered view:", {view})
         const viewDoc: Document = view.document;
         // Set event handlers for the document
-        viewDoc.oncontextmenu = e => e.preventDefault();
-        viewDoc.onmouseup = showMenuForSelection;
-        viewDoc.ontouchcancel = showMenuForSelection;
         viewDoc.ontouchstart = recordTouchStartCoordinates;
         viewDoc.ontouchend = performCustomTouchGesture;
       })
@@ -156,18 +169,22 @@ export default function Reader({params}: {params : Promise<{bookId: string}>}) {
 
   // OnTouchEnd Event Handler
   function performCustomTouchGesture(e: TouchEvent) {
-    e.preventDefault();
 
     console.debug("ontouchend flip page", e)
-    for (const el of e.composedPath()) {
-      console.debug({el});
-    }
 
     // If user clicks on annotation, DO NOT PERFROM CUSTOM TOUCH ACTION
     if (markClickedRef.current) return;
 
     // If there is a current selection, DO NOT PERFROM CUSTOM TOUCH ACTION
     if (!e.view?.document.getSelection()?.isCollapsed) return;
+
+    // If user click on an internal link, DO NOT PERFROM CUSTOM TOUCH ACTION
+    for (const el of e.composedPath() as any) {
+      console.debug(el.nodeName);
+      if (el.nodeName === "A") {
+        return;
+      }
+    }
 
     const readerWidth = e.view?.outerWidth!;
 
@@ -187,19 +204,13 @@ export default function Reader({params}: {params : Promise<{bookId: string}>}) {
 
     // If user taps the screen
     if (absDeltaX < MIN_SWIPE_DISTANCE && absDeltaY < MIN_SWIPE_DISTANCE) {
-      console.debug("tapped the center");
-      // Show top bar
-      setShowTopBar(true);
+      e.preventDefault();
+      console.debug("tapped the center", {absDeltaX, absDeltaY});
+      // Toggle top bar
+      setShowTopBar(!showTopBarRef.current);
     }
-  }
-
-
-  // OnMouseUp and OnTouchCancel Event Handler
-  function showMenuForSelection(e: MouseEvent | TouchEvent) {
-    e.preventDefault();
-    console.debug("finish selection event: ", e);
-    if (!e.view?.document.getSelection()?.isCollapsed) {
-      setShowActionBar(true);
+    else {
+      setShowTopBar(false);
     }
   }
 
@@ -297,7 +308,15 @@ export default function Reader({params}: {params : Promise<{bookId: string}>}) {
       });
 
     if (!genImage || genImageError) {
-      console.error("function visualize: genImageError", genImageError)
+      console.error("function visualize: genImageError", genImageError.context?.status)
+      if (genImageError.context?.status === 429) {
+        const errData: { status: number; message: string; reset: number } = await genImageError.context.json();
+        const resetDate = new Date(errData.reset);
+        setVisualizeError( `${errData.message}\n\nYour quota resets on ${resetDate.toLocaleString()}`);
+      }
+      else {
+        setVisualizeError('Error visualizing image');
+      }
        return;
     }
     // Get user data - need for id
@@ -324,16 +343,19 @@ export default function Reader({params}: {params : Promise<{bookId: string}>}) {
       console.error("unable to save highlight error:", insertError?.message);
       return;
     }
-    // Add new annotation the current epub rendition
-    rendition?.annotations.highlight(s.location, {img_url: genImage.img_url});
 
-    setVisualization({
+    const hData: Visualization = {
       id: insertData.id,
       text: insertData.text,
       location: insertData.location,
       img_url: insertData.img_url,
       img_prompt: insertData.img_prompt
-    })
+    }
+
+    // Add new annotation the current epub rendition
+    rendition?.annotations.highlight(s.location, hData);
+
+    setVisualization(hData);
   }
 
 
@@ -373,12 +395,12 @@ export default function Reader({params}: {params : Promise<{bookId: string}>}) {
     setShowImageViewer(false);
     setMarkClicked(false);
     setVisualization(undefined)
+    setVisualizeError(undefined);
   }
 
 
   function removeSelection() {
     if (rendition) {
-      // @ts-ignore: DO NOT REMOVE THIS COMMENT
       rendition.getContents().forEach((c: Contents) => {
         c.window.getSelection()?.removeAllRanges();
       });
@@ -471,6 +493,7 @@ export default function Reader({params}: {params : Promise<{bookId: string}>}) {
       <ImageVisualizer
         isOpen={showImageViewer}
         visualization={visualization}
+        error={visualizeError}
         onClose={closeImageVisualizer}
         onDelete={async (v: Visualization) => {
           try {
