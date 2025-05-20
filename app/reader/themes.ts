@@ -1,8 +1,8 @@
 export const midnightReaderTheme = {
   // Global body styles
   body: {
-    'background-color': '#1e1e1e !important', // A dark, but not pure black, background
-    'color': '#d4d4d4 !important',            // A light gray for text, not stark white
+    'background-color': '#1e1e1e', // A dark, but not pure black, background
+    'color': '#d4d4d4',            // A light gray for text, not stark white
     'font-family': "'-apple-system', 'BlinkMacSystemFont', 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue', sans-serif",
     'font-size': '105%',           // Slightly larger base font size for readability
     'line-height': '1.7',          // Generous line spacing
@@ -122,8 +122,8 @@ export const midnightReaderTheme = {
 export const daylightReaderTheme = {
   // Global body styles
   body: {
-    'background-color': '#FCFCFC !important', // A very light, clean background, not stark white
-    'color': '#222222 !important',            // A dark gray for text for good readability
+    'background-color': '#FCFCFC', // A very light, clean background, not stark white
+    'color': '#222222',            // A dark gray for text for good readability
     'font-family': "'-apple-system', 'BlinkMacSystemFont', 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue', sans-serif",
     'font-size': '105%',
     'line-height': '1.7',

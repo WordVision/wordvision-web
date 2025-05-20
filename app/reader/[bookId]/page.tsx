@@ -32,6 +32,9 @@ export default function Reader({params}: {params : Promise<{bookId: string}>}) {
 
   const { bookId } = use(params);
 
+  // Dark/Light mode
+  const [darkMode, setDarkMode] = useState<boolean>(true);
+
   // Book/epub related
   const [bookLoaded, setBookLoaded] = useState<boolean>(false);
   const [selection, setSelection] = useState<BookSelection | null>(null);
@@ -127,18 +130,14 @@ export default function Reader({params}: {params : Promise<{bookId: string}>}) {
           img_prompt: h.img_prompt
         }
 
-        rendition?.annotations.highlight(h.location, hData, undefined, "", {
-          // 'fill': '#8E44AD ',
-          // 'fill-opacity': '0.3'
+        rendition?.annotations.highlight(h.location, hData, undefined, "", darkMode ? {
+          'fill': '#8E44AD ',
+          'fill-opacity': '0.3'
+        } : {
           'fill': '#9370DB',
           'fill-opacity': '0.35'
         });
       });
-
-      rendition.themes.register("midnightReader", midnightReaderTheme);
-      rendition.themes.register("daylightReader", daylightReaderTheme);
-      // rendition.themes.select("midnightReader");
-      rendition.themes.select("daylightReader");
 
       // Setup rendtion event handlers
       rendition.on("selected", (cfiRange: string) => {
@@ -162,6 +161,12 @@ export default function Reader({params}: {params : Promise<{bookId: string}>}) {
         setShowImageViewer(true);
         setVisualization(data)
       });
+
+      rendition.on("displayed", () => {
+        rendition.themes.register("daylightReader", daylightReaderTheme);
+        rendition.themes.register("midnightReader", midnightReaderTheme);
+        rendition.themes.select(darkMode ? "midnightReader" : "daylightReader");
+      })
 
       rendition.on("rendered", (_: Section, view: any) => {
         console.debug("rendered view:", {view})
@@ -365,9 +370,10 @@ export default function Reader({params}: {params : Promise<{bookId: string}>}) {
     }
 
     // Add new annotation the current epub rendition
-    rendition?.annotations.highlight(s.location, hData, undefined, "", {
-      // 'fill': '#8E44AD',
-      // 'fill-opacity': '0.3'
+    rendition?.annotations.highlight(s.location, hData, undefined, "", darkMode ? {
+      'fill': '#8E44AD ',
+      'fill-opacity': '0.3'
+    } : {
       'fill': '#9370DB',
       'fill-opacity': '0.35'
     });
@@ -432,7 +438,24 @@ export default function Reader({params}: {params : Promise<{bookId: string}>}) {
     <div className="h-screen relative flex flex-col justify-center items-center bg-red-200">
       <TopBar
         show={showTopBar}
+        dark={darkMode}
         tocHandler={() => setShowTOC(true)}
+        darkModeHandler={() => {
+
+          if (darkMode) {
+            console.log("changing to light");
+            setDarkMode(false);
+
+            renditionRef.current?.themes.update("daylightReader");
+          }
+          else {
+            console.log("changing to dark");
+            setDarkMode(true);
+            renditionRef.current?.themes.update("midnightReader");
+          }
+
+          setShowTopBar(false);
+        }}
         dismissHandler={() => setShowTopBar(false)}
       />
 
