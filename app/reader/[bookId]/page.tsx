@@ -15,13 +15,16 @@ import TopBar from "../components/TopBar";
 import ActionBar from "../components/ActionBar";
 import TableOfContents from "../components/TableOfContents";
 import ImageVisualizer from "../components/ImageVisualizer";
+import LoadingModal from "../components/LoadingModal";
+
+
+import { daylightReaderTheme, midnightReaderTheme } from "../themes";
 
 import type {
   BookSelection,
   Visualization,
   Coordinates
 } from "../types";
-import LoadingModal from "../components/LoadingModal";
 
 const MIN_SWIPE_DISTANCE = 1; // Minimum distance in pixels for a swipe
 
@@ -124,8 +127,18 @@ export default function Reader({params}: {params : Promise<{bookId: string}>}) {
           img_prompt: h.img_prompt
         }
 
-        rendition?.annotations.highlight(h.location, hData);
-      })
+        rendition?.annotations.highlight(h.location, hData, undefined, "", {
+          // 'fill': '#8E44AD ',
+          // 'fill-opacity': '0.3'
+          'fill': '#9370DB',
+          'fill-opacity': '0.35'
+        });
+      });
+
+      rendition.themes.register("midnightReader", midnightReaderTheme);
+      rendition.themes.register("daylightReader", daylightReaderTheme);
+      // rendition.themes.select("midnightReader");
+      rendition.themes.select("daylightReader");
 
       // Setup rendtion event handlers
       rendition.on("selected", (cfiRange: string) => {
@@ -149,7 +162,6 @@ export default function Reader({params}: {params : Promise<{bookId: string}>}) {
         setShowImageViewer(true);
         setVisualization(data)
       });
-
 
       rendition.on("rendered", (_: Section, view: any) => {
         console.debug("rendered view:", {view})
@@ -353,7 +365,12 @@ export default function Reader({params}: {params : Promise<{bookId: string}>}) {
     }
 
     // Add new annotation the current epub rendition
-    rendition?.annotations.highlight(s.location, hData);
+    rendition?.annotations.highlight(s.location, hData, undefined, "", {
+      // 'fill': '#8E44AD',
+      // 'fill-opacity': '0.3'
+      'fill': '#9370DB',
+      'fill-opacity': '0.35'
+    });
 
     setVisualization(hData);
   }
