@@ -3,7 +3,7 @@
 import { use, useEffect, useRef, useState } from "react";
 import ePub, { Contents, NavItem, Rendition } from "epubjs";
 import Section from "epubjs/types/section";
-import { redirect } from "next/navigation";
+import { redirect, useRouter } from "next/navigation";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { v4 as uuidv4 } from 'uuid';
 
@@ -17,9 +17,6 @@ import TableOfContents from "../components/TableOfContents";
 import ImageVisualizer from "../components/ImageVisualizer";
 import LoadingModal from "../components/LoadingModal";
 
-
-import { daylightReaderTheme, midnightReaderTheme } from "../themes";
-
 import type {
   BookSelection,
   Visualization,
@@ -31,6 +28,7 @@ const MIN_SWIPE_DISTANCE = 1; // Minimum distance in pixels for a swipe
 export default function Reader({params}: {params : Promise<{bookId: string}>}) {
 
   const { bookId } = use(params);
+  const router = useRouter();
 
   // Dark/Light mode
   const [darkMode, setDarkMode] = useState<boolean>(true);
@@ -85,13 +83,13 @@ export default function Reader({params}: {params : Promise<{bookId: string}>}) {
 
   useEffect(() => {
     (async () => {
-      // Download book
+      // Download book data
       let bookData;
       try {
         bookData = await downloadBookData(bookId)
       }
       catch (error) {
-        console.error("Error downloading book from remote: ", error);
+        console.error("Error downloading book data from remote: ", error);
         return
       }
 
@@ -162,12 +160,6 @@ export default function Reader({params}: {params : Promise<{bookId: string}>}) {
         setVisualization(data)
       });
 
-      rendition.on("displayed", () => {
-        rendition.themes.register("daylightReader", daylightReaderTheme);
-        rendition.themes.register("midnightReader", midnightReaderTheme);
-        rendition.themes.select(darkMode ? "midnightReader" : "daylightReader");
-      })
-
       rendition.on("rendered", (_: Section, view: any) => {
         console.debug("rendered view:", {view})
         const viewDoc: Document = view.document;
@@ -176,8 +168,11 @@ export default function Reader({params}: {params : Promise<{bookId: string}>}) {
         viewDoc.ontouchend = performCustomTouchGesture;
       })
 
+      // Get last read location
+      const location = await getReadingProgress(bookId);
+
       // Display rendition
-      rendition.display();
+      rendition.display(location || undefined);
       setRendition(rendition);
     })();
   }, [bookId]);
@@ -422,6 +417,62 @@ export default function Reader({params}: {params : Promise<{bookId: string}>}) {
   }
 
 
+  async function getReadingProgress(bookId: string): Promise<string> {
+    const supabase = createClient();
+
+    // Get user data - need for id
+    const { data: { user }} = await supabase.auth.getUser();
+    if (!user) {
+      return redirect("/login");
+    }
+
+    const {data, error: locationError} = await supabase
+      .from("user_books")
+      .select("current_location")
+      .match({
+        user_id: user.id,
+        book_id: bookId,
+      })
+      .single();
+
+    if (locationError) {
+      console.error("Error retrieving current location: ", locationError)
+      throw locationError;
+    }
+
+    return data.current_location;
+  }
+
+  async function saveReadingProgress(bookId: string, location: string | null) {
+    const supabase = createClient();
+
+    // Get user data - need for id
+    const { data: { user }} = await supabase.auth.getUser();
+    if (!user) {
+      return redirect("/login");
+    }
+
+    console.log({bookId, location});
+    const {data: update, error: updateError} = await supabase
+      .from("user_books")
+      .update({
+        current_location: location
+      })
+      .match({
+        user_id: user.id,
+        book_id: bookId,
+      })
+      .select();
+
+    if (updateError) {
+      console.error("Update Reading Progress Error: ", updateError)
+    }
+    else {
+      console.log(update);
+    }
+  }
+
+
   function removeSelection() {
     if (rendition) {
       rendition.getContents().forEach((c: Contents) => {
@@ -440,8 +491,17 @@ export default function Reader({params}: {params : Promise<{bookId: string}>}) {
         show={showTopBar}
         dark={darkMode}
         tocHandler={() => setShowTOC(true)}
+        backHandler={async () => {
+          if (rendition?.location.atStart) {
+            await saveReadingProgress(bookId, null);
+          }
+          else {
+            const location = rendition?.location.start.cfi;
+            await saveReadingProgress(bookId, location!);
+          }
+          router.back();
+        }}
         darkModeHandler={() => {
-
           if (darkMode) {
             console.log("changing to light");
             setDarkMode(false);
