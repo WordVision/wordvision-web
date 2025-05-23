@@ -168,6 +168,12 @@ export default function Reader({params}: {params : Promise<{bookId: string}>}) {
         viewDoc.ontouchend = performCustomTouchGesture;
       })
 
+      rendition.themes.override("background-color", "#1E1E1E"); // true makes it !important
+      rendition.themes.override("color", "#D4D4D4");
+      rendition.themes.override("text-align", "left");
+      rendition.themes.override("line-height", "1.7");
+      rendition.themes.font("Verdana, Arial, Helvetica, sans-serif");
+
       // Get last read location
       const location = await getReadingProgress(bookId);
 
