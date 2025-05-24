@@ -1,11 +1,11 @@
 "use client"
 
 import { use, useEffect, useRef, useState } from "react";
-import ePub, { Contents, NavItem, Rendition } from "epubjs";
+import ePub, { Contents, Location, NavItem, Rendition } from "epubjs";
 import Section from "epubjs/types/section";
 import { redirect, useRouter } from "next/navigation";
 import { ChevronLeft, ChevronRight } from "lucide-react";
-import { v4 as uuidv4 } from 'uuid';
+import { User } from "@supabase/supabase-js";
 
 import { createClient } from "@/utils/supabase/client";
 import { Spinner } from "@/components/ui/spinner";
@@ -16,6 +16,18 @@ import ActionBar from "../components/ActionBar";
 import TableOfContents from "../components/TableOfContents";
 import ImageVisualizer from "../components/ImageVisualizer";
 import LoadingModal from "../components/LoadingModal";
+
+import {
+  downloadFile,
+  getBookDetails,
+  // getUserLastLocationInBook
+} from "../services/bookService";
+
+import {
+  getBookHighlights
+} from "../services/highlightService";
+
+import { deleteVisualization, visualize } from "../actions";
 
 import type {
   BookSelection,
@@ -30,6 +42,8 @@ export default function Reader({params}: {params : Promise<{bookId: string}>}) {
   const { bookId } = use(params);
   const router = useRouter();
 
+  const [user, setUser] = useState<User>();
+
   // Dark/Light mode
   const [darkMode, setDarkMode] = useState<boolean>(true);
 
@@ -37,7 +51,6 @@ export default function Reader({params}: {params : Promise<{bookId: string}>}) {
   const [bookLoaded, setBookLoaded] = useState<boolean>(false);
   const [selection, setSelection] = useState<BookSelection | null>(null);
   const [visualization, setVisualization] = useState<Visualization | undefined>(undefined);
-  const [bookTitle, setBookTitle] = useState<string>("Untitled");
   const [rendition, setRendition] = useState<Rendition | null>(null);
   const renditionRef = useRef(rendition);
   useEffect(() => {
@@ -62,7 +75,7 @@ export default function Reader({params}: {params : Promise<{bookId: string}>}) {
   const [showImageViewer, setShowImageViewer] = useState<boolean>(false);
   const [visualizeError, setVisualizeError] = useState<string | undefined>();
 
-  // For swipe gestures
+  // For touch gestures
   const [touchStart, setTouchStart] = useState<Coordinates>({x: 0, y: 0});
   const touchStartRef = useRef(touchStart);
   useEffect(() => {
@@ -81,12 +94,30 @@ export default function Reader({params}: {params : Promise<{bookId: string}>}) {
   const [loadingMessage, setLoadingMessage] = useState<string>("");
 
 
+
+
+  // ========================================
+  // DOWNLOAD BOOK AND SETUP READER
+  // ========================================
+
   useEffect(() => {
     (async () => {
-      // Download book data
-      let bookData;
+      const supabase = createClient();
+
+      // Get user data - need for id
+      const { data: { user }} = await supabase.auth.getUser();
+      if (!user) {
+        return redirect("/login");
+      }
+      setUser(user);
+
+      let bookDetails, lastLocation, bookData, bookHighlights;
       try {
-        bookData = await downloadBookData(bookId)
+        bookDetails = await getBookDetails(bookId);
+        // lastLocation = await getUserLastLocationInBook(user.id, bookId);
+        lastLocation = localStorage.getItem(`${user.id}-${bookId}`);
+        bookData = await downloadFile("books", bookDetails.filename);
+        bookHighlights = await getBookHighlights(bookId);
       }
       catch (error) {
         console.error("Error downloading book data from remote: ", error);
@@ -110,25 +141,8 @@ export default function Reader({params}: {params : Promise<{bookId: string}>}) {
         allowScriptedContent: true
       });
 
-      // Load book highlights onto epub rendition
-      let bookHighlights;
-      try{
-        bookHighlights = await getBookHighlights(bookId);
-      }
-      catch (error) {
-        console.error("Error retrieving book highlights: ", error);
-        return
-      }
       bookHighlights.forEach(h => {
-        const hData: Visualization = {
-          id: h.id,
-          text: h.text,
-          location: h.location,
-          img_url: h.img_url,
-          img_prompt: h.img_prompt
-        }
-
-        rendition?.annotations.highlight(h.location, hData, undefined, "", darkMode ? {
+        rendition?.annotations.highlight(h.location, h, undefined, "", darkMode ? {
           'fill': '#8E44AD ',
           'fill-opacity': '0.3'
         } : {
@@ -160,6 +174,15 @@ export default function Reader({params}: {params : Promise<{bookId: string}>}) {
         setVisualization(data)
       });
 
+      rendition.on("relocated", (location: Location) => {
+        if (location.atStart) {
+          localStorage.removeItem(`${user.id}-${bookId}`);
+        }
+        else {
+          localStorage.setItem(`${user.id}-${bookId}`, location.start.cfi);
+        }
+      })
+
       rendition.on("rendered", (_: Section, view: any) => {
         console.debug("rendered view:", {view})
         const viewDoc: Document = view.document;
@@ -168,34 +191,32 @@ export default function Reader({params}: {params : Promise<{bookId: string}>}) {
         viewDoc.ontouchend = performCustomTouchGesture;
       })
 
-      rendition.themes.override("background-color", "#1E1E1E"); // true makes it !important
+      rendition.themes.override("background-color", "#1E1E1E");
       rendition.themes.override("color", "#D4D4D4");
       rendition.themes.override("text-align", "left");
       rendition.themes.override("line-height", "1.7");
       rendition.themes.font("Verdana, Arial, Helvetica, sans-serif");
 
-      // Get last read location
-      const location = await getReadingProgress(bookId);
-
       // Display rendition
-      rendition.display(location || undefined);
+      rendition.display(lastLocation || undefined);
       setRendition(rendition);
     })();
   }, [bookId]);
 
 
 
+
+  // ========================================
+  // HANDLER FUNCTIONS
+  // ========================================
+
   // OnTouchEnd Event Handler
   function performCustomTouchGesture(e: TouchEvent) {
-
     console.debug("ontouchend flip page", e)
-
     // If user clicks on annotation, DO NOT PERFROM CUSTOM TOUCH ACTION
     if (markClickedRef.current) return;
-
     // If there is a current selection, DO NOT PERFROM CUSTOM TOUCH ACTION
     if (!e.view?.document.getSelection()?.isCollapsed) return;
-
     // If user click on an internal link, DO NOT PERFROM CUSTOM TOUCH ACTION
     for (const el of e.composedPath() as any) {
       console.debug(el.nodeName);
@@ -203,9 +224,7 @@ export default function Reader({params}: {params : Promise<{bookId: string}>}) {
         return;
       }
     }
-
     const readerWidth = e.view?.outerWidth!;
-
     // Make sure endX is within the bounds of readerWidth
     let endX = e.changedTouches[0].clientX;
     while (endX > readerWidth) {
@@ -248,170 +267,49 @@ export default function Reader({params}: {params : Promise<{bookId: string}>}) {
   }
 
 
-  async function downloadBookData(bookId: string): Promise<ArrayBuffer> {
-    const supabase = createClient();
+  async function visualizeHandler() {
+    console.debug({selection});
+    removeSelection();
+    if (selection) {
+      setShowActionBar(false);
+      setSelection(null);
+      setShowImageViewer(true);
+      const { data, error } = await visualize(user?.id!, bookId, selection);
+      if (data) {
+        // Add new annotation the current epub rendition
+        rendition?.annotations.highlight(selection.location, data, undefined, "", darkMode ? {
+          'fill': '#8E44AD ',
+          'fill-opacity': '0.3'
+        } : {
+          'fill': '#9370DB',
+          'fill-opacity': '0.35'
+        });
 
-    // Get book by id
-    const { data: userBook, error: userBooksError } = await supabase
-      .from("books")
-      .select("title, filename")
-      .eq("id", bookId)
-      .single();
-
-    if (userBooksError) {
-      console.error(`Could not fetch book with id: ${bookId}`, userBooksError)
-      throw userBooksError;
-    }
-
-    // Set book title. This information will be used as context when visualizing
-    setBookTitle(userBook.title)
-
-    // Create signed url for book
-    const { data: urlData, error: urlError } = await supabase
-      .storage
-      .from("books")
-      .createSignedUrl(userBook.filename, 3600);
-
-    if (urlError) {
-      console.error(`Could not create signed url for book with id: ${bookId}`, urlError);
-      throw urlError;
-    }
-
-    // Fetch book data from url
-    const res = await fetch(urlData.signedUrl);
-    const blob = await res.blob();
-
-    return await blob.arrayBuffer();
-  }
-
-
-  async function getBookHighlights(bookId: string): Promise<Visualization[]> {
-    const supabase = createClient();
-
-    // Get book highlights
-    const { data: bookHighlights, error: bookHighlightsError } = await supabase
-      .from("highlights")
-      .select()
-      .eq("book_id", bookId)
-
-    if (bookHighlightsError) {
-      console.error("Could not fetch book highlights: ", bookHighlights)
-      throw bookHighlightsError;
-    }
-
-    console.log({bookHighlights});
-
-    return bookHighlights
-  }
-
-
-  async function visualize(s: BookSelection) {
-    const supabase = createClient();
-
-    // Generate image from prompt and get url
-    const image_id = uuidv4();
-    console.debug("Visualization Data: ", {
-      image_id,
-      passage: s.text,
-      book_title: bookTitle
-    })
-    const {data: genImage, error: genImageError} = await supabase
-      .functions
-      .invoke<{img_url: string}>('generate-image', {
-        body: {
-          image_id,
-          passage: s.text,
-          book_title: bookTitle
-        },
-      });
-
-    if (!genImage || genImageError) {
-      console.error("function visualize: genImageError", genImageError.context?.status)
-      if (genImageError.context?.status === 429) {
-        const errData: { status: number; message: string; reset: number } = await genImageError.context.json();
-        const resetDate = new Date(errData.reset);
-        setVisualizeError( `${errData.message}\n\nYour quota resets on ${resetDate.toLocaleString()}`);
+        setVisualization(data);
       }
       else {
-        setVisualizeError('Error visualizing image');
+        setVisualizeError(error.message);
       }
-       return;
     }
-    // Get user data - need for id
-    const { data: { user }} = await supabase.auth.getUser();
-    if (!user) {
-      return redirect("/login");
+    else {
+      console.error("No Selection");
     }
-
-    // Insert new visualized highlight
-    const {data: insertData, error: insertError } = await supabase
-      .from("highlights")
-      .insert({
-        user_id: user.id,
-        book_id: bookId,
-        text: s.text,
-        location: s.location,
-        img_url: genImage.img_url,
-        img_prompt: s.text,
-      })
-      .select()
-      .single();
-
-    if (insertError) {
-      console.error("unable to save highlight error:", insertError?.message);
-      return;
-    }
-
-    const hData: Visualization = {
-      id: insertData.id,
-      text: insertData.text,
-      location: insertData.location,
-      img_url: insertData.img_url,
-      img_prompt: insertData.img_prompt
-    }
-
-    // Add new annotation the current epub rendition
-    rendition?.annotations.highlight(s.location, hData, undefined, "", darkMode ? {
-      'fill': '#8E44AD ',
-      'fill-opacity': '0.3'
-    } : {
-      'fill': '#9370DB',
-      'fill-opacity': '0.35'
-    });
-
-    setVisualization(hData);
   }
 
 
-  async function deleteVisualization(v: Visualization) {
-    const supabase = createClient();
-
-    // Get image path
-    const imgPath = v.img_url.split("images/")[1];
-
-    // Delete image
-    const { error: deleteImageError } = await supabase
-      .storage
-      .from('images')
-      .remove([imgPath])
-
-    if (deleteImageError) {
-      console.error("Error deleting image: ", deleteImageError);
-      throw deleteImageError;
+  async function onDeleteImageHandler(v: Visualization) {
+    setLoadingMessage("Deleting Visualization...")
+    setLoading(true);
+    const { error } = await deleteVisualization(v);
+    if (!error) {
+      rendition?.annotations.remove(v.location, "highlight");
+      closeImageVisualizer();
     }
-
-    // Delete highlight
-    const response = await supabase
-      .from('highlights')
-      .delete()
-      .eq('id', v.id);
-
-    if (response.error) {
-      console.error("Error deleting highlight metadata: ", response.error);
-      throw response.error;
+    else {
+      setVisualizeError(error.message);
     }
-    // Remove highlight from rendition
-    rendition?.annotations.remove(v.location, "highlight");
+    setLoading(false);
+    setLoadingMessage("")
   }
 
 
@@ -420,62 +318,6 @@ export default function Reader({params}: {params : Promise<{bookId: string}>}) {
     setMarkClicked(false);
     setVisualization(undefined)
     setVisualizeError(undefined);
-  }
-
-
-  async function getReadingProgress(bookId: string): Promise<string> {
-    const supabase = createClient();
-
-    // Get user data - need for id
-    const { data: { user }} = await supabase.auth.getUser();
-    if (!user) {
-      return redirect("/login");
-    }
-
-    const {data, error: locationError} = await supabase
-      .from("user_books")
-      .select("current_location")
-      .match({
-        user_id: user.id,
-        book_id: bookId,
-      })
-      .single();
-
-    if (locationError) {
-      console.error("Error retrieving current location: ", locationError)
-      throw locationError;
-    }
-
-    return data.current_location;
-  }
-
-  async function saveReadingProgress(bookId: string, location: string | null) {
-    const supabase = createClient();
-
-    // Get user data - need for id
-    const { data: { user }} = await supabase.auth.getUser();
-    if (!user) {
-      return redirect("/login");
-    }
-
-    console.log({bookId, location});
-    const {data: update, error: updateError} = await supabase
-      .from("user_books")
-      .update({
-        current_location: location
-      })
-      .match({
-        user_id: user.id,
-        book_id: bookId,
-      })
-      .select();
-
-    if (updateError) {
-      console.error("Update Reading Progress Error: ", updateError)
-    }
-    else {
-      console.log(update);
-    }
   }
 
 
@@ -491,6 +333,12 @@ export default function Reader({params}: {params : Promise<{bookId: string}>}) {
   }
 
 
+
+
+  // ========================================
+  // READER COMPONENT
+  // ========================================
+
   return (
     <div className="h-screen relative flex flex-col justify-center items-center bg-red-200">
       <TopBar
@@ -498,13 +346,6 @@ export default function Reader({params}: {params : Promise<{bookId: string}>}) {
         dark={darkMode}
         tocHandler={() => setShowTOC(true)}
         backHandler={async () => {
-          if (rendition?.location.atStart) {
-            await saveReadingProgress(bookId, null);
-          }
-          else {
-            const location = rendition?.location.start.cfi;
-            await saveReadingProgress(bookId, location!);
-          }
           router.back();
         }}
         darkModeHandler={() => {
@@ -568,19 +409,7 @@ export default function Reader({params}: {params : Promise<{bookId: string}>}) {
           setShowActionBar(false);
           setSelection(null);
         }}
-        visualizeHandler={async () => {
-          console.debug({selection});
-          removeSelection();
-          if (selection) {
-            setShowActionBar(false);
-            setSelection(null);
-            setShowImageViewer(true);
-            await visualize(selection);
-          }
-          else {
-            console.error("No Selection");
-          }
-        }}
+        visualizeHandler={visualizeHandler}
       />
 
       <TableOfContents
@@ -601,19 +430,7 @@ export default function Reader({params}: {params : Promise<{bookId: string}>}) {
         visualization={visualization}
         error={visualizeError}
         onClose={closeImageVisualizer}
-        onDelete={async (v: Visualization) => {
-          try {
-            setLoadingMessage("Deleting Visualization...")
-            setLoading(true);
-            await deleteVisualization(v);
-            closeImageVisualizer();
-            setLoading(false);
-            setLoadingMessage("")
-          }
-          catch(error) {
-            console.error("Delete Visualization Error: ", error);
-          }
-        }}
+        onDelete={onDeleteImageHandler}
       />
 
       <LoadingModal
