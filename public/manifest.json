@@ -16,6 +16,7 @@
     }
   ],
   "orientation": "any",
+  "display_override": ["fullscreen", "minimal-ui"],
   "display": "standalone",
   "dir": "auto",
   "lang": "en-CA",
