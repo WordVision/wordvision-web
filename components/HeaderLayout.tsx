@@ -14,7 +14,7 @@ interface HeaderProps {
 
 export default function HeaderLayout(p: HeaderProps) {
   return (
-    <div className="p-4 flex justify-between items-center">
+    <div className="sticky top-0 left-0 right-0 z-50 p-4 flex justify-between items-center bg-white">
       <p
         style={playfairDisplay.style}
         className="text-[42px] text-[#2C3131]"
