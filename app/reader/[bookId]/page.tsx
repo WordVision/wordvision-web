@@ -4,12 +4,10 @@ import { use, useEffect, useRef, useState } from "react";
 import ePub, { Contents, Location, NavItem, Rendition } from "epubjs";
 import Section from "epubjs/types/section";
 import { redirect, useRouter } from "next/navigation";
-import { ChevronLeft, ChevronRight } from "lucide-react";
 import { User } from "@supabase/supabase-js";
 
 import { createClient } from "@/utils/supabase/client";
 import { Spinner } from "@/components/ui/spinner";
-import { Button, ButtonIcon } from "@/components/ui/button";
 
 import TopBar from "../components/TopBar";
 import ActionBar from "../components/ActionBar";
