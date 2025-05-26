@@ -7,6 +7,7 @@ import { createClient } from "@/utils/supabase/server";
 import HeaderLayout from "@/components/HeaderLayout";
 
 import LogoutButton from "./components/LogoutButton";
+import Avatar from "@/components/Avatar";
 
 const inter500 = Inter({ weight: '500', subsets: ['latin'] })
 const inter400 = Inter({ weight: '400', subsets: ['latin'] })
@@ -48,12 +49,13 @@ export default async function UserProfilePage() {
 
       <div className="px-4 flex-1">
         <div className="p-4 flex flex-col items-center gap-4 border-b">
-          <div
-            style={inter500.style}
-            className="mt-4 w-[72px] h-[72px] text-2xl text-[#0A0D14] flex justify-center items-center rounded-full shadow-[inset_0px_-8px_16px_0px_rgba(0,0,0,0.1)]"
-          >
-            {userData.firstName[0] + userData.lastName[0]}
-          </div>
+          <Avatar
+            firstName={userData.firstName}
+            lastName={userData.lastName}
+            width={72}
+            height={72}
+            fontSize={24}
+          />
           <p style={inter500.style} className="text-lg text-[#0A0D14]">
             {userData.firstName} {userData.lastName}
           </p>
