@@ -340,7 +340,7 @@ export default function Reader({params}: {params : Promise<{bookId: string}>}) {
   // ========================================
 
   return (
-    <div className="h-screen relative flex flex-col justify-center items-center bg-red-200">
+    <div className="h-screen relative flex flex-col justify-center items-center">
       <TopBar
         show={showTopBar}
         dark={darkMode}
@@ -367,38 +367,11 @@ export default function Reader({params}: {params : Promise<{bookId: string}>}) {
       />
 
       <div className="w-full h-full flex justify-center items-center">
-
-        {/* Previous page button (only on desktop) */}
-        {bookLoaded &&
-          <Button
-            className="hidden lg:block"
-            size="md"
-            variant="solid"
-            action="primary"
-            onPress={() => {
-              rendition?.prev()
-          }}>
-            <ButtonIcon as={ChevronLeft} />
-          </Button>
-        }
-
-        {/* epub reader container */}
-        <div id="reader" className="bg-white h-full w-full lg:w-1/2">
-          {!bookLoaded && <Spinner className="self-center"/>}
-        </div>
-
-        {/* Next page button (only on desktop) */}
-        {bookLoaded &&
-          <Button
-            className="hidden lg:block"
-            size="md"
-            variant="solid"
-            action="primary"
-            onPress={() => {
-              rendition?.next()
-          }}>
-            <ButtonIcon as={ChevronRight} />
-          </Button>
+        {bookLoaded ?
+          // Where the epub iframe will go when book is ready
+          <div id="reader" className="bg-white h-full w-full lg:w-1/2"></div>
+        :
+          <Spinner />
         }
       </div>
 
