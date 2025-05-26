@@ -5,6 +5,21 @@ import { createClient } from "@/utils/supabase/server";
 import { BookSelection, Visualization } from "./types";
 import { FunctionsHttpError } from '@supabase/supabase-js';
 
+/**
+ * Generates an image based on the user's selected text and saves the details
+ * as a highlight to the remote db
+ *
+ * @async
+ * @function visualize
+ * @param {string} userId - The ID of the user requesting the visualization.
+ * @param {string} bookId - The ID of the book to which the selected passage belongs.
+ * @param {{text: string, location: string(epubcfi)}} selection - An object detailing the user's selection.
+ *
+ * @returns
+ * A promise that resolves to:
+ * {data: Visualization, error: null} on success or
+ * {data: null, error: {message: string}} on error
+ */
 export async function visualize(
   userId: string,
   bookId: string,
@@ -102,8 +117,18 @@ export async function visualize(
 }
 
 
-
-
+/**
+ * Deletes an image visualization from the remote db and storage
+ *
+ * @async
+ * @function deleteVisualization
+ * @param {Visualization} v - details of the image to delete
+ *
+ * @returns
+ * A promise that resolves to:
+ * {error: null} on success or
+ * {error: {message: string}} on error
+ */
 export async function deleteVisualization(v: Visualization): Promise<{error: { message: string } | null}> {
   const supabase = await createClient();
 
@@ -142,8 +167,20 @@ export async function deleteVisualization(v: Visualization): Promise<{error: { m
 }
 
 
-
-
+/**
+ * Saves the user's location in the book to the database
+ *
+ * @async
+ * @function saveReadingProgress
+ * @param {string} userId - The ID of the user reading the book.
+ * @param {string} bookId - The ID of the book to save location to.
+ * @param {string | null} location - epubcfi of the user's current location in the book.
+ *
+ * @returns
+ * A promise that resolves to:
+ * {error: null} on success or
+ * {error: {message: string}} on error
+ */
 export async function saveReadingProgress(
   userId: string,
   bookId: string,

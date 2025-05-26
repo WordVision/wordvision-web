@@ -2,6 +2,16 @@ import { createClient } from "@/utils/supabase/client";
 import { BookDetails } from "../types";
 
 
+/**
+ * Gets the details for a given book
+ *
+ * @async
+ * @function getBookDetails
+ * @param {string} bookId - The ID of the book to get details from.
+ *
+ * @returns
+ * A promise that resolves to the books basic details (title, filename)
+ */
 export async function getBookDetails(bookId: string): Promise<BookDetails> {
   const supabase = createClient();
 
@@ -20,6 +30,18 @@ export async function getBookDetails(bookId: string): Promise<BookDetails> {
   return book;
 }
 
+
+/**
+ * Gets the user's last read location in the book from remote
+ *
+ * @async
+ * @function getUserLastLocationInBook
+ * @param {string} userId - The ID of the user who owns the book.
+ * @param {string} bookId - The ID of the book the user wants to read.
+ *
+ * @returns
+ * A promise that resolves to an epubcfi location in the book (string)
+ */
 export async function getUserLastLocationInBook(userId: string, bookId: string): Promise<string | null> {
   const supabase = createClient();
 
@@ -42,6 +64,17 @@ export async function getUserLastLocationInBook(userId: string, bookId: string):
 }
 
 
+/**
+ * Downloads the file contents of a file from supabase storage.
+ *
+ * @async
+ * @function downloadFile
+ * @param {string} bucket - The name of the bucket where the file is located
+ * @param {string} filename - The name of the file to download
+ *
+ * @returns
+ * A promise that resolves to the binary data of the downloaded file (ArrayBuffer)
+ */
 export async function downloadFile(bucket: string, filename: string): Promise<ArrayBuffer> {
   const supabase = createClient();
 
