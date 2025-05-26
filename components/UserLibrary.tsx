@@ -4,8 +4,11 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { createClient } from "@/utils/supabase/client";
 import Link from "next/link";
 import Image from "next/image";
-import FileUploader, { FileUploaderHandle } from "./FileUploader";
 import { redirect } from "next/navigation";
+import { Inter } from "next/font/google";
+
+import FileUploader, { FileUploaderHandle } from "./FileUploader";
+import HeaderLayout from "@/components/HeaderLayout";
 
 type Book = {
   id: string;
@@ -21,6 +24,8 @@ type Props = {
   };
 };
 
+const inter500 = Inter({ weight: "500", subsets: ["latin"] });
+
 export default function UserLibrary({ user }: Props) {
   const [books, setBooks] = useState<Book[]>([]);
   const [loading, setLoading] = useState(true);
@@ -28,9 +33,30 @@ export default function UserLibrary({ user }: Props) {
 
   const uploaderRef = useRef<FileUploaderHandle>(null);
 
-  const fetchUserBooks = useCallback(async () => {
-    const supabase = createClient();
+  const supabase = createClient();
+  const [userData, setUserData] = useState<{
+    email: string;
+    firstName: string;
+    lastName: string;
+    birthDate: string;
+  }>();
 
+  useEffect(() => {
+    const fetchUserData = async () => {
+      const { data } = await supabase.auth.getUser();
+      if (data?.user) {
+        setUserData({
+          email: data.user.email ?? "",
+          firstName: data.user.user_metadata.first_name,
+          lastName: data.user.user_metadata.last_name,
+          birthDate: data.user.user_metadata.birthdate,
+        });
+      }
+    };
+    fetchUserData();
+  }, [supabase]);
+
+  const fetchUserBooks = useCallback(async () => {
     const { data: userBooks, error: userBooksError } = await supabase
       .from("user_books")
       .select("book_id")
@@ -71,28 +97,43 @@ export default function UserLibrary({ user }: Props) {
 
   return (
     <div className="p-4">
+      <HeaderLayout text="Discover">
+        <Link href="/profile">
+          <button className="p-3 rounded-full active:bg-neutral-50">
+            <div className="pt-1 pb-2 px-2 flex flex-col items-center gap-2 border-b">
+              <div
+                style={inter500.style}
+                className="w-[72px] h-[72px] text-2xl flex justify-center items-center rounded-full shadow-[inset_0px_-8px_16px_0px_rgba(0,0,0,0.1)]"
+              >
+                {userData.firstName[0] + userData.lastName[0]}
+              </div>
+            </div>
+          </button>
+        </Link>
+      </HeaderLayout>
+      <h2 className="text-2xl font-bold text-gray-800 mb-4">Featured</h2>
 
-
-      <div className="flex flex-wrap gap-4">
+      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
         {books.map((book) => (
           <Link key={book.id} href={`/reader/${book.id}`}>
-            <div className="flex flex-col items-center cursor-pointer">
+            <div className="cursor-pointer">
               {book.cover_url ? (
                 <Image
                   src={book.cover_url}
                   alt={book.title}
-                  width={120}
+                  width={300}
                   height={180}
-                  className="rounded-md object-cover mb-3"
+                  className="w-full h-[180px] object-cover rounded-lg"
                 />
               ) : (
-                <div className="w-[120px] h-[180px] bg-gray-100 text-center flex flex-col justify-center items-center rounded-md mb-3 p-2">
-                  <p className="font-semibold text-black text-sm">
-                    {book.title}
-                  </p>
-                  <p className="text-xs text-gray-500">{book.author}</p>
+                <div className="w-full h-[180px] bg-gray-100 flex items-center justify-center text-gray-500 text-sm rounded-lg">
+                  No Cover
                 </div>
               )}
+              <h3 className="mt-1 text-[15px] font-semibold text-gray-900 leading-snug break-words">
+                {book.title}
+              </h3>
+              <p className="text-sm text-gray-600 truncate">{book.author}</p>
             </div>
           </Link>
         ))}
@@ -128,7 +169,6 @@ export default function UserLibrary({ user }: Props) {
       >
         sign out
       </button>
-
     </div>
   );
 }
