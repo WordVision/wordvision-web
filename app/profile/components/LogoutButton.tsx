@@ -17,15 +17,12 @@ export default function LogoutButton() {
 
   return (
     <button
-      className={
-        inter600.className +
-        " text-[#DF1C41] text-[14px] py-4 rounded-xl active:bg-white w-full"
-      }
+      style={inter600.style}
+      className="text-[#DF1C41] text-[14px] py-4 rounded-xl active:bg-white w-full"
       aria-label="Sign Out"
       onClick={handleSignOut}
     >
       Logout
     </button>
   )
-
 }
