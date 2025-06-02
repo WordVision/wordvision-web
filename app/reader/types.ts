@@ -1,3 +1,8 @@
+export interface BookDetails {
+  title: string;
+  filename: string;
+}
+
 export interface BookSelection {
   text: string;
   location: string;
