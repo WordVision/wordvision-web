@@ -8,8 +8,8 @@ export default async function SignupPage() {
     <div className="flex w-full h-screen bg-login-background">
       {/* Left Side - Decorative Section */}
       <div className="relative hidden md:flex md:w-1/2 items-center justify-center">
-        <div className="absolute w-full h-2/5 bg-purple-600 opacity-80 rounded-full transform scale-100 rotate-[-15deg]"></div>
-        <div className="relative z-10 w-2/5 h-2/5 rounded-full overflow-hidden bg-white">
+        <div className="absolute w-[70%] h-[40%] bg-purple-600 opacity-80 rounded-full transform scale-100 rotate-[-15deg]"></div>
+        <div className="relative z-10 w-[40%] h-[40%] rounded-full overflow-hidden bg-white">
           <Image
             src="/icons/my_logo.png"
             alt="wordVision Logo"
@@ -22,7 +22,6 @@ export default async function SignupPage() {
 
       {/* Right Side - Form Section */}
       <div className="flex w-full md:w-1/2 min-h-screen bg-login-background flex-col items-center justify-center">
-        {/* WordVision Heading */}
         <h1 className="text-5xl sm:text-6xl font-bold text-white mb-3">
           WordVision
         </h1>
