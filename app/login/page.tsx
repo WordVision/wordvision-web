@@ -1,32 +1,57 @@
 // app/login/page.tsx
+"use client";
 import Image from "next/image";
-// import Link from "next/link";
+import Link from "next/link";
+import { useState, useEffect } from "react";
 import { login } from "./actions";
+import { LogIn, Eye, EyeOff } from "lucide-react";
 
-export default async function LoginPage() {
+export default function LoginPage() {
+  const [showPassword, setShowPassword] = useState(false);
+  const [password, setPassword] = useState("");
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  if (!mounted) {
+    return null;
+  }
+
+  const handlePasswordToggle = () => {
+    if (password.trim() !== "") {
+      setShowPassword(!showPassword);
+    }
+  };
+
   return (
-    <div className="flex w-full min-h-screen bg-login-background">
+    <div className="flex w-full h-screen bg-login-background">
       {/* Left Side - Decorative Section */}
-      <div className="relative hidden md:flex md:w-5/12 items-center justify-center">
-        <div className="absolute w-full h-2/5 bg-purple-600 opacity-80 rounded-full transform scale-100 rotate-[-15deg]"></div>
-        <div className="relative z-10 w-2/5 h-2/5 rounded-full overflow-hidden bg-white">
+      <div className="relative hidden md:flex md:w-1/2 items-center justify-center">
+        <div className="absolute w-[70%] h-[40%] bg-purple-600 opacity-80 rounded-full transform scale-100 rotate-[-15deg]"></div>
+        <div className="relative z-10 w-[40%] h-[40%] rounded-full overflow-hidden bg-white">
           <Image
             src="/icons/my_logo.png"
             alt="wordVision Logo"
-            layout="fill"
-            objectFit="cover"
+            fill
+            style={{ objectFit: "cover" }}
             priority
           />
         </div>
       </div>
 
-      <div className="w-full md:w-7/12 flex flex-col items-center justify-center p-6 sm:p-8 md:px-12 lg:px-20">
-        {/* WordVision Heading */}
+      {/* Right Side - Form Section */}
+      <div className="w-full md:w-1/2 flex flex-col items-center justify-center p-6 sm:p-8 md:px-12 lg:px-20">
         <h1 className="text-5xl sm:text-6xl font-bold text-white mb-3">
           WordVision
         </h1>
 
         <div className="w-full max-w-md bg-white p-8 rounded-lg shadow-lg">
+          <div className="mx-auto mb-6 w-[60px] h-[60px] text-[#0A0D14] flex justify-center items-center rounded-full shadow-[inset_0px_-8px_16px_0px_rgba(0,0,0,0.1)]">
+            <LogIn size={32} />
+          </div>
+
           <h2 className="text-2xl sm:text-3xl font-bold text-gray-800 mb-6">
             Login to Account
           </h2>
@@ -39,32 +64,71 @@ export default async function LoginPage() {
                 name="email"
                 type="email"
                 required
-                placeholder="Enter your Email here"
+                placeholder="example@gmail.com"
                 className="w-full p-3 bg-gray-100 text-gray-800 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500"
               />
             </div>
-
             <div className="mb-6">
               <label className="block text-gray-600 text-sm mb-2">
                 Password
               </label>
-              <input
-                id="password"
-                name="password"
-                type="password"
-                required
-                placeholder="Enter your Password here"
-                className="w-full p-3 bg-gray-100 text-gray-800 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500"
-              />
+              <div className="relative">
+                <input
+                  id="password"
+                  name="password"
+                  type={showPassword ? "text" : "password"}
+                  required
+                  placeholder="* * * * * * * *"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  className="w-full p-3 bg-gray-100 text-gray-800 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500 pr-10"
+                />
+                <div
+                  className={`absolute inset-y-0 right-0 pr-3 flex items-center ${
+                    password.trim() === ""
+                      ? "cursor-not-allowed text-gray-300"
+                      : "cursor-pointer text-gray-500 hover:text-gray-700"
+                  }`}
+                  onClick={handlePasswordToggle}
+                >
+                  {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+                </div>
+              </div>
             </div>
-
             <button
               type="submit"
               className="w-full bg-purple-600 hover:bg-purple-700 text-white font-medium py-3 px-4 rounded-md transition-colors duration-300"
             >
               Log In
-            </button>
+            </button>{" "}
           </form>
+
+          <div className="mt-4 text-center text-gray-600 text-sm sm:text-base">
+            Don't have an account?
+            <Link
+              href="/signup"
+              className="text-purple-500 hover:text-purple-400 ml-1"
+            >
+              Sign Up
+            </Link>
+          </div>
+
+          <div className="flex items-center my-6">
+            <div className="flex-grow h-px bg-gray-300"></div>
+            <span className="px-4 text-gray-500">OR</span>
+            <div className="flex-grow h-px bg-gray-300"></div>
+          </div>
+
+          <button className="w-full flex items-center justify-center bg-transparent border border-gray-300 text-gray-800 py-3 px-4 rounded-md hover:bg-gray-100 transition-colors duration-300">
+            <Image
+              src="/icons/google.png"
+              alt="Google"
+              width={20}
+              height={20}
+              className="mr-2"
+            />
+            Login with Google
+          </button>
         </div>
       </div>
     </div>
