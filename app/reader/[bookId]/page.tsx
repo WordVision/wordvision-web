@@ -49,6 +49,7 @@ export default function Reader({params}: {params : Promise<{bookId: string}>}) {
   const [bookLoaded, setBookLoaded] = useState<boolean>(false);
   const [selection, setSelection] = useState<BookSelection | null>(null);
   const [visualization, setVisualization] = useState<Visualization | undefined>(undefined);
+  const [curLocation, setCurLocation] = useState<Location>();
   const [rendition, setRendition] = useState<Rendition | null>(null);
   const renditionRef = useRef(rendition);
   useEffect(() => {
@@ -173,6 +174,7 @@ export default function Reader({params}: {params : Promise<{bookId: string}>}) {
       });
 
       rendition.on("relocated", (location: Location) => {
+        setCurLocation(location);
         if (location.atStart) {
           localStorage.removeItem(`${user.id}-${bookId}`);
         }
@@ -342,7 +344,7 @@ export default function Reader({params}: {params : Promise<{bookId: string}>}) {
       <TopBar
         show={showTopBar}
         dark={darkMode}
-        tocHandler={() => setShowTOC(true)}
+        tocHandler={() => {setShowTOC(true); setShowTopBar(false)}}
         backHandler={async () => {
           router.back();
         }}
@@ -394,6 +396,7 @@ export default function Reader({params}: {params : Promise<{bookId: string}>}) {
           setShowTOC(false);
           setShowTopBar(false);
         }}
+        curLocation={curLocation}
       />
 
       <ImageVisualizer
