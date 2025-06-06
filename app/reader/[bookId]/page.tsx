@@ -1,7 +1,7 @@
 "use client"
 
 import { use, useEffect, useRef, useState } from "react";
-import ePub, { Contents, Location, NavItem, Rendition } from "epubjs";
+import ePub, { Book, Contents, Location, NavItem, Rendition } from "epubjs";
 import Section from "epubjs/types/section";
 import { redirect, useRouter } from "next/navigation";
 import { User } from "@supabase/supabase-js";
@@ -46,6 +46,7 @@ export default function Reader({params}: {params : Promise<{bookId: string}>}) {
   const [darkMode, setDarkMode] = useState<boolean>(true);
 
   // Book/epub related
+  const [book, setBook] = useState<Book>();
   const [bookLoaded, setBookLoaded] = useState<boolean>(false);
   const [selection, setSelection] = useState<BookSelection | null>(null);
   const [visualization, setVisualization] = useState<Visualization | undefined>(undefined);
@@ -126,7 +127,10 @@ export default function Reader({params}: {params : Promise<{bookId: string}>}) {
       // Load book data
       const book = ePub(bookData);
       await book.ready;
+      await book.locations.generate(150);
+
       setBookLoaded(true)
+      setBook(book);
 
       // Set table of contents data
       setTOC(book.navigation.toc);
@@ -397,6 +401,7 @@ export default function Reader({params}: {params : Promise<{bookId: string}>}) {
           setShowTopBar(false);
         }}
         curLocation={curLocation}
+        book={book!}
       />
 
       <ImageVisualizer

@@ -1,12 +1,13 @@
 "use client"
 
-import { useEffect, useRef } from "react";
-import { Location, NavItem } from "epubjs";
+import { useEffect, useRef, useState } from "react";
+import { Book, EpubCFI, Location, NavItem } from "epubjs";
 import { Drawer } from "vaul";
 import { X } from "lucide-react";
 import { Inter } from "next/font/google";
 
 const inter500 = Inter({ weight: '500', subsets: ['latin'] })
+
 
 interface TableOfContentsProps {
   isOpen: boolean;
@@ -14,22 +15,19 @@ interface TableOfContentsProps {
   toc: NavItem[];
   onItemPress: (item: NavItem) => void;
   curLocation: Location | undefined;
-}
-
-function isCurrentLocation(curLocHref: string | undefined, navItemHref: string): boolean {
-  if (curLocHref && navItemHref.startsWith(curLocHref)) {
-    return true;
-  }
-  return false;
+  book: Book;
 }
 
 export default function TableOfContents(p: TableOfContentsProps) {
 
   const tocItemRef = useRef<HTMLButtonElement>(null);
+  const [tocItemId, setTocItemId] = useState<string | null>();
   let visited = true;
 
   useEffect(() => {
     if (p.isOpen) {
+      setTocItemId(findCurrentLocationId(p.book, p.toc, p.curLocation?.start.cfi!));
+
       // Give the browser time to render and open the drawer before scrolling
       // into view
       const timer = setTimeout(() => {
@@ -71,8 +69,10 @@ export default function TableOfContents(p: TableOfContentsProps) {
 
           <div className="max-h-[80vh] overflow-y-auto">
             {p.toc.map((item, i) => {
-              const isCurLoc = isCurrentLocation(p.curLocation?.start.href, item.href);
+
+              const isCurLoc = tocItemId === item.id;
               if (isCurLoc) visited = false;
+
               return (
                 <button
                   key={i}
@@ -80,7 +80,7 @@ export default function TableOfContents(p: TableOfContentsProps) {
                   className="w-full px-4 active:bg-neutral-200 flex items-center gap-2"
                   onClick={() => p.onItemPress(item)}
                 >
-                  {!p.curLocation?.atStart && (visited || isCurLoc) ?
+                  {!p.curLocation?.atStart && tocItemId && (visited || isCurLoc) ?
                     <TocBulletActive />
                   :
                     <TocBulletPassive />
@@ -126,5 +126,30 @@ function TocBulletPassive() {
       <path d="M0 7L4.04199 0L8.08301 7L4.04199 14L0 7Z" fill="#E2E4E9"/>
     </svg>
   )
+}
+
+
+function findCurrentLocationId(book: Book, toc: NavItem[], currCfi: string): string | null {
+  let currId: string | null = null;
+
+  toc.forEach(item => {
+    const section = book.spine.get(item.href);
+    const id = item.href.split('#')[1];
+
+    if (section.document) {
+      const epubcfi = new EpubCFI();
+      const el = (id ? section.document.getElementById(id) : section.document.body) as Element
+      const itemCfi = section.cfiFromElement(el);
+      const comparison = epubcfi.compare(currCfi, itemCfi);
+
+      // If current cfi location is later than the toc item in question
+      if (comparison > -1) {
+        // Set this item's id as the current, because this is the latest item we know so far we've visited
+        currId = item.id;
+      }
+    }
+  })
+
+  return currId;
 }
 
