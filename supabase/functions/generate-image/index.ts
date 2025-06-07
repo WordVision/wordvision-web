@@ -2,8 +2,8 @@ import { HfInference } from "@huggingface/inference";
 import { Redis } from "@upstash/redis";
 import { Ratelimit } from "@upstash/ratelimit";
 import { GoogleGenAI } from "@google/genai";
-import { SupabaseClient } from "../_shared/supabaseClient.ts";
-import { corsHeaders } from "../_shared/cors.ts";
+import { SupabaseClient } from "../_shared/supabaseClient";
+import { corsHeaders } from "../_shared/cors";
 Deno.serve(async (req) => {
   // This is needed for invoking from a browser.
   if (req.method === "OPTIONS") {
