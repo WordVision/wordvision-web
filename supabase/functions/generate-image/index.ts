@@ -134,7 +134,7 @@ Deno.serve(async (req) => {
 });
 async function generateImage(prompt: string): Promise<Blob> {
   console.log("🤖 Calling OpenAI with prompt:", prompt);
-  const apiKey = Deno.env.get("EXPO_PUBLIC_OPENAI_TOKEN");
+  const apiKey = Deno.env.get("NEXT_PUBLIC_OPENAI_TOKEN");
 
   const response = await fetch("https://api.openai.com/v1/images/generations", {
     method: "POST",
